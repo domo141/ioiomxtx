@@ -1,0 +1,33 @@
+#!/bin/sh
+:; set -eufx; test -d $HOME/.local/share/mxtx
+:; exec "${EMACS:-emacs}" --debug-init -q --load "$0" "$@"; exit
+
+(setq initial-buffer-choice nil
+      inhibit-startup-screen t)
+
+(defun run (name &rest cmd-args)
+  (let* ((bn (concat "*" name "*"))
+	 (buf (generate-new-buffer bn)))
+    (switch-to-buffer buf)
+    (insert "$ " (mapconcat #'identity cmd-args " ") "\n")
+    ;; "env" since start-process looks exec-path *only* :O
+    (apply 'start-process name buf "env" cmd-args)
+    (sit-for 0.2)
+    ;;(goto-char (point-min)) ;;(redisplay)
+    ;;(goto-char (point-max)) ;;(redisplay)
+    ))
+
+(split-window-below)
+(split-window-below)
+(balance-windows)
+(run "mxtx0" "./ioio.pl" "/" "./mxtx -s" "/" "./mxtx -ct")
+(other-window 1)
+(run "mxtx1" "./ioio.pl" "." "./mxtx -s" "." "./mxtx -cu")
+(other-window 1)
+;;(split-window-below)
+(run "mxtx-sb" "./mxtx-socksproxy" "t" "u" "" "/")
+;;(other-window 1)
+
+;; Local Variables:
+;; mode: emacs-lisp
+;; End:
