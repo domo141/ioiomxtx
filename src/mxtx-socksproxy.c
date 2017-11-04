@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Sun 24 Sep 2017 11:13:36 +0300 too
+ * Last modified: Sat 04 Nov 2017 17:49:17 +0200 too
  */
 
 #define _DEFAULT_SOURCE // for newer linux environments
@@ -39,6 +39,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/poll.h>
+#include <sys/time.h>
 #include <errno.h>
 
 #include "mxtx-lib.h"
@@ -59,6 +60,7 @@ const char * _prg_ident = "mxtx-socksproxy: ";
 static struct {
     char * network;
     char pidbuf[16]; // 64-bit aligned...
+    struct timeval stv;
 } G;
 
 #define LINEREAD_DATA_BUFFER_SIZE 4096
@@ -228,6 +230,17 @@ int main(int argc, char * argv[])
     return 0;
 }
 
+static float elapsed(void) {
+    struct timeval tv;
+    gettimeofday(&tv, null);
+    if (tv.tv_usec < G.stv.tv_usec) {
+        tv.tv_sec--;
+        tv.tv_usec += 1000000;
+    }
+    return (tv.tv_sec - G.stv.tv_sec) +
+        (float)(tv.tv_usec - G.stv.tv_usec) / 1000000;
+}
+
 static void may_serve_index_file_request(const char * host, char * rbuf);
 
 static void start(void)
@@ -236,6 +249,7 @@ static void start(void)
     char * p;
     unsigned char * ubuf = (unsigned char *)buf;
     int port;
+    gettimeofday(&G.stv, null);
     snprintf(G.pidbuf, sizeof G.pidbuf, "sp-%d: ", getpid());
     _prg_ident = G.pidbuf;
     /*
@@ -347,7 +361,8 @@ static void io(int ifd, int ofd)
     if (l <= 0) {
         // hmm, econnreset...
         if (l == 0 || errno == ECONNRESET) {
-            warn("EOF from %d. Exiting.", ifd);
+            float tr = elapsed();
+            warn("EOF from %d (%.3f s). Exiting.", ifd, tr);
             exit(0);
         }
         // do we need EINTR handling. possibly not, (as not blocking) //

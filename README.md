@@ -15,7 +15,7 @@ to connect one `mxtx` endpoint to another, often utilizing **ssh** on one
 ioio
 ----
 
-`ioio.pl` runs two (2) commands and connecs their stdio streams to each other.
+`ioio.pl` runs two (2) commands and connects their stdio streams to each other.
 The implementation is very simple, effectively just around 40 lines of code.
 
 The command line usage looks like:
@@ -33,7 +33,7 @@ With such a simple program some pretty neat things can be achieved;
 usually in companion with `ssh(1)`.
 
 As an alternative to `///` separator, "specially" formatted first argument
-can also ne used as a separator (`ioio.pl` contains built-in help for more
+can also be used as a separator (`ioio.pl` contains built-in help for more
 information). The following example use this alternative ('.' as a separator):
 
 ```
@@ -68,9 +68,9 @@ can be handled by this software. On one end `mxtx` is started in `client`
 mode, and in `server` mode on another.
 
 `mxtx` client binds unix domain socket where mxtx-aware client software can
-connect. Via this socket client sofware requests a command to be executed on
+connect. Via this socket client software requests a command to be executed on
 server. `mxtx` client creates new "connection" and sends request to server,
-and bidirectional stdio between mxtx cliend and the program executed by server
+and bidirectional stdio between mxtx client and the program executed by server
 is then transferred (until EOF is received on either end).
 
 `mxtx` does not handle any flow control -- usually the socketpairs it
@@ -130,9 +130,9 @@ of executed command is shown (on terminal) where `mxtx`s were started.
 
 Mxtx copy command. Utilizes `rsync(1)` (subset of rsync options available, some
 set on default). There is also `--tar` workaround mode to environments where
-rsync(1) is not available (on both communication endpoints). W/o `tar(1)`
-there user can resort to `mxtx-io`, `cat(1)` and shell redirections to copy
-a file.
+rsync(1) is not available (on either communication endpoints). In case there
+wasn't even `tar(1)` available, user could resort to `mxtx-io`, `cat(1)` and
+shell redirections to copy a file.
 
 #### socksproxy
 
@@ -146,7 +146,7 @@ chrome/chromium instance which uses this socksproxy for connections.
 (for now). It takes mxtx *link* names as arguments. When run it reads
 ($HOME/.local/share/mxtx/socksproxy/)`hosts-to-proxy` files on link
 targets to see what hosts are connectable behind every particular link.
-the tool `./addhost.sh` (installed to the same directory) can be used to
+The tool `./addhost.sh` (installed to the same directory) can be used to
 ease adding hosts to the `hosts-to-proxy` file.
 
 #### mxtx-apu.sh
