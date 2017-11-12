@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 20:24:06 EEST too
- * Last modified: Sun 24 Sep 2017 11:08:03 +0300 too
+ * Last modified: Sun 12 Nov 2017 12:18:33 +0200 too
  */
 
 #include <unistd.h>
@@ -65,17 +65,16 @@ static void io(int ifd, int ofd)
     }
 }
 
-static int rexec(char ** av)
+static int rexec(char * lnk, char ** rcmdv)
 {
     unsigned char rcmdline[1024];
     unsigned char * p = rcmdline + 4;
-    char ** rcmd = av;
-    char *rcmd0 = rcmd[0];
-    while (*(++rcmd)) {
-        size_t len = strlen(*rcmd);
+    char *rcmd = rcmdv[0];
+    for (; *rcmdv; ++rcmdv) {
+        size_t len = strlen(*rcmdv);
         if (len >= sizeof rcmdline - (p - rcmdline) - 1)
-            die("command line %s... too long", rcmd0);
-        strcpy((char *)p, *rcmd);
+            die("command line %s... too long", rcmd);
+        strcpy((char *)p, *rcmdv);
         p += len + 1;
     }
     rcmdline[0] = 0;
@@ -83,10 +82,24 @@ static int rexec(char ** av)
     rcmdline[2] = (p - rcmdline - 4) / 256;
     rcmdline[3] = (p - rcmdline - 4) & 255;
 
-    int sd = connect_to_mxtx(default_mxtx_socket_path(av[0]));
+    int sd = connect_to_mxtx(default_mxtx_socket_path(lnk));
     if (sd < 0) exit(1);
     write(sd, rcmdline, p - rcmdline);
     return sd;
+}
+
+// optignore: for cases this used as 'ssh' command...
+static void optignore(int * argcp, char *** argvp) {
+    while (*argcp > 0) {
+        // warn("%d %s", *argcp, (*argvp)[0]);
+        if ((*argvp)[0][0] != '-')
+            break;
+        if (strcmp((*argvp)[0], "-e") == 0) {
+            *argcp -= 2; *argvp += 2;
+        }
+        else
+            break;
+    }
 }
 
 static int is_link(char * arg)
@@ -119,6 +132,8 @@ int main(int argc, char ** argv)
     }
     if (sep) { argc--; argv++; }
 
+    optignore(&argc, &argv);
+
     if (argc < 1) {
         fprintf(stderr, "\nUsage: %s [sep] [link] command [args] "
                 "[<sep> [link:] command [args]]\n\n\
@@ -150,10 +165,16 @@ are tied together.\n\n", prgname, prgname);
     else if (argc < 2)
         die("Command missing");
 
+    /// XXX unify above and below (if you care) ///
+
     int sd1, sd2, sdo;
     if (!sep) {
         is_link(argv[0]);
-        sd1 = rexec(argv);
+        char * lnk = argv[0];
+        argc--; argv++;
+        optignore(&argc, &argv);
+        if (argc < 1) die("Command missing");
+        sd1 = rexec(lnk, argv);
         sd2 = 0;
         sdo = 1;
         // continue to io loop //
@@ -164,7 +185,7 @@ are tied together.\n\n", prgname, prgname);
 
         /**/ if (r1 && ! r2) {
             close(0);
-            sd1 = rexec(argv);
+            sd1 = rexec(argv[0], argv + 1);
             xmovefd(sd1, 0); // expect it to be 0, though
             xdup2(0, 1);
             xexecvp(rcmdl2[0], rcmdl2);
@@ -172,7 +193,7 @@ are tied together.\n\n", prgname, prgname);
         }
         else if (r2 && ! r1) {
             close(0);
-            sd2 = rexec(rcmdl2);
+            sd2 = rexec(rcmdl2[0], rcmdl2 + 1);
             xmovefd(sd2, 0); // expect it to be 0, though
             xdup2(0, 1);
             xexecvp(argv[0], argv);
@@ -203,8 +224,8 @@ are tied together.\n\n", prgname, prgname);
             // not reached //
         }
         else {
-            sd1 = rexec(argv);
-            sd2 = rexec(rcmdl2);
+            sd1 = rexec(argv[0], argv + 1);
+            sd2 = rexec(rcmdl2[0], rcmdl2 + 1);
             sdo = sd2;
             // continue to io loop //
         }
