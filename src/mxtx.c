@@ -1,17 +1,8 @@
 #if 0 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*-
  set -euf; trg=${0##*''/}; trg=${trg%.c}; test ! -e "$trg" || rm "$trg"
- # opportunistic version tuning when using version from git #
- if test -e .git; then gitdir=.git
- elif test -e ../.git; then gitdir=../.git
- else gitdir=; DVERSION=
- fi
- if test "$gitdir"
- then	s () { set -- `exec git --no-pager log -1 --abbrev=7 --pretty='%h %ci'`
-	       ch=$1 cd=$2; }; s
-	cn=`git --no-pager log --pretty=%H | awk 'END { print NR - 1; }'`
-		#/f9abef809f498c8f44c3593c9976d75f630/ { print NR - 2; exit }'`
-	test "`exec git status --porcelain -uno`" && m=-mod || m=
-	DVERSION=-DVERSION=\""1.0-$cn-g$ch-$cd$m\""
+ if test -x version.sh
+ then DVERSION='-DVERSION="'`exec ./version.sh`'"'
+ else DVERSION='-DVERSION="'`exec date +%Y-%m-%d`'"'
  fi
  WARN="-Wall -Wstrict-prototypes -Winit-self -Wformat=2" # -pedantic
  WARN="$WARN -Wcast-align -Wpointer-arith " # -Wfloat-equal #-Werror
@@ -28,9 +19,6 @@
  exit $?
  */
 #endif
-#ifndef VERSION
-#define VERSION "1.0"
-#endif
 /*
  * $ mxtx.c $
  *
@@ -41,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Sun 29 Oct 2017 18:28:42 +0200 too
+ * Last modified: Sun 12 Nov 2017 13:39:27 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):

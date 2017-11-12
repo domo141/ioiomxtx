@@ -1,5 +1,5 @@
 #
-# $ Makefile $
+# $ GNUmakefile $
 #
 # Author: Tomi Ollila -- too ät iki piste fi
 #
@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Sun 29 Oct 2017 19:02:44 +0200 too
+# Last modified: Sun 12 Nov 2017 19:11:16 +0200 too
 
 SHELL = /bin/sh
 
@@ -19,7 +19,7 @@ BIN += ldpreload-i2ubind.so ldpreload-i2uconnect5.so
 
 all: $(BIN)
 
-mxtx: src/mxtx.c libmxtx.a
+mxtx: src/mxtx.c libmxtx.a $(wildcard .git/index)
 	sh $<
 
 mxtx-lib.o: src/mxtx-lib.c src/mxtx-lib.h
@@ -46,7 +46,7 @@ ldpreload-i2ubind.so ldpreload-i2uconnect5.so: src/ldpreload-i2usocket.c
 
 YES ?= NO
 install: $(BIN)
-	sed '1,/^$@.sh:/d;/^#.#eos/q' Makefile | /bin/sh -s YES=$(YES) $(BIN)
+	sed '1,/^$@.sh:/d;/^#.#eos/q' GNUmakefile | /bin/sh -s YES=$(YES) $(BIN)
 
 install.sh:
 	test -n "$1" || exit 1 # embedded shell script; not to be made directly
@@ -101,7 +101,7 @@ unin:
 
 .PHONY: git-head
 git-head:
-	sed '1,/^$@.sh:/d;/^#.#eos/q' Makefile | /bin/sh -s $@
+	sed '1,/^$@.sh:/d;/^#.#eos/q' Gnumakefile | /bin/sh -s $@
 
 git-head.sh:
 	test -n "$1" || exit 1 # embedded shell script; not to be made directly
