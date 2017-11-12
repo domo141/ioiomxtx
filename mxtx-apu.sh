@@ -73,15 +73,15 @@ esac
 
 cmd_sshmxtx () # create default forward tunnel using ssh (link '0:')
 {
-	test $# -ge 1 || usage '[user@]host [env=val [env...]' \
+	test $# -ge 2 || usage 'link [user@]host [env=val [env...]' \
 			"'env's, if any, will be set in host"
-	remote=$1 shift;
+	link=$1 remote=$2 shift 2;
 	for arg; do
 		# perhaps too tight here...
 		case $arg in *['(`\']*) ;; *=*) set -- "$@" \""$arg"\"; esac
 		shift
 	done
-	x_exec ioio.pl / .mxtx -c / ssh "$remote" env $* .mxtx -s
+	x_exec ioio.pl / .mxtx -c"$link" / ssh "$remote" env $* .mxtx -s
 }
 
 cmd_chromie () # start chromium / chrome browser w/ mxtx socks5 tunneling
