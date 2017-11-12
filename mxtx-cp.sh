@@ -8,7 +8,7 @@
 #           All rights reserved
 #
 # Created: Tue 24 Oct 2017 19:45:43 EEST too
-# Last modified: Sun 29 Oct 2017 14:10:06 +0200 too
+# Last modified: Sun 12 Nov 2017 23:04:14 +0200 too
 
 case ~ in '~') echo "'~' does not expand. old /bin/sh?" >&2; exit 1; esac
 
@@ -125,8 +125,8 @@ case $sopts in *x*) ofs=--one-file-system ;; *) ofs= ;; esac
 case $1 in *:*) star="mxtx-rsh ${1%%:*} tar" s=${1#*:}
 	;; *) star=tar s=$1
 esac
-# remove '-e' when porting for e.g. ssh use
-case $2 in *:*) dtar="mxtx-rsh -e ${2%%:*} tar" d=${2#*:}
+# remove '.' before 'tar' when porting for e.g. ssh use
+case $2 in *:*) dtar="mxtx-rsh ${2%%:*} . tar" d=${2#*:}
 	;; *) dtar=tar d=$2
 esac
 

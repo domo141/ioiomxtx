@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Sat 28 Oct 2017 10:36:33 +0300 too
+ * Last modified: Mon 13 Nov 2017 11:06:29 +0200 too
  */
 
 // for linux to compile w/ -std=c99
@@ -79,7 +79,7 @@ static void sighandler(int sig);
 int main(int argc, char * argv[])
 {
     if (argc <= 1)
-        die("Usage: %s [-t] [-e] remote [command] [args]", argv[0]);
+        die("Usage: %s [-t] remote [.] [command] [args]", argv[0]);
 
     int tty = 0, caa = 0;
 
@@ -87,16 +87,18 @@ int main(int argc, char * argv[])
     while (argv[1][0] == '-') {
         /**/ if (argv[1][1] == 't' && argv[1][2] == '\0')
             tty = 1;
-        else if (argv[1][1] == 'e' && argv[1][2] == '\0')
-            caa = 1;
         else
             die("'%s': unknown option", argv[1]);
         argc--; argv++;
 
     }
-    if (argc == 2) {
-        if (caa) die("Option '-e' requires command");
+    if (argc == 2)
         tty = 1;
+
+    if (argc > 2 && argv[2][0] == '.' && argv[2][1] == '\0') {
+        if (argc == 3)
+            die("After '.' command is required");
+        caa = 1;
     }
 
     if (tty && tcgetattr(0, &G.saved_tio) < 0) {
@@ -118,7 +120,7 @@ int main(int argc, char * argv[])
              ws.ws_col = 80, ws.ws_row = 24;
          }
          else if (ioctl(0, TIOCGWINSZ, &ws) < 0) {
-             warn("getting window size failed (using 80x24):");
+             warn("Getting window size failed (using 80x24):");
              ws.ws_col = 80, ws.ws_row = 24;
          }
          *p++ = '\0'; *p++ = '\005'; *p++ = 't';
@@ -146,7 +148,7 @@ int main(int argc, char * argv[])
     }
     else {
         unsigned char * s = p; p += 3;
-        for (int i = 2; i < argc; i++) {
+        for (int i = caa? 3: 2; i < argc; i++) {
             int l = strlen(argv[i]);
             if (p - pr.data >= isizeof pr.data - l - 4)
                 die("Command line and env. variables take too much space");
