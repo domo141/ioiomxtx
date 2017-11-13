@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Sun 12 Nov 2017 13:39:27 +0200 too
+ * Last modified: Mon 13 Nov 2017 21:31:17 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -83,6 +83,9 @@
 #include <sys/un.h>
 #include <arpa/inet.h> // for htons/ntohs
 #include <errno.h>
+
+#include <sys/cdefs.h>
+#define XSTR(x) __STRING(x)
 
 #define NO_DIEWARN_PROTOS
 #include "mxtx-lib.h"
@@ -254,6 +257,8 @@ static void vout(int fd, const char * format, va_list ap)
 #define log4(...) if (G.loglevels[4]) warn(__VA_ARGS__)
 // XXX move all data io to log5() -- i.e. high-traffic
 #define log5(...) if (G.loglevels[5]) warn(__VA_ARGS__)
+
+#define tdbg(format, ...) warn(XSTR(__LINE__) ": " format, __VA_ARGS__)
 
 static void ATTRIBUTE ((format (printf, 1, 2)))
 warn(const char * format, ...)
@@ -767,6 +772,7 @@ static int server_handle_internal_command(char ** args, int argc)
 	    return -1;
 	}
     }
+    //tdbg("connect(%d) to %s:%d in progress", sd, args[1], iport);
     log4("pollout %d %d", sd, G.nfds);
     G.pfds[G.nfds].events = POLLOUT;
     return sd;
