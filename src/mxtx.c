@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Mon 13 Nov 2017 21:31:17 +0200 too
+ * Last modified: Tue 14 Nov 2017 18:30:00 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -440,10 +440,10 @@ static int from_iopipe(int fd, uint8_t * chnl, uint8_t * cntr, char * data)
     *cntr = ((unsigned char *)hdr)[1];
     int len = ntohs(hdr[1]);
     if (len > 16384)
-	die("Protocol error: mx input message: chnl %d len %d too long\n",
-	    *chnl, len);
+	die("Protocol error: mx input message: chnl %d:%d len %d too long\n",
+	    *chnl, *cntr, len);
 
-    log4("Mx input: channel %d: expect %d bytes", *chnl, len);
+    log4("Mx input: channel %d:%d expect %d bytes", *chnl, *cntr, len);
 
     if (len)
 	xreadfully(fd, data, len);
@@ -496,7 +496,7 @@ static int from_socket_to_iopipe(int pfdi, int iofd)
 	if (len < 0) {
 	    log1("Read from %d failed. Closing:", fd);
 	} else
-	    log3("EOF for channel %d:%d (local). Closing.", fd,G.chnlcntr[fd]);
+	    log3("EOF: channel %d:%d (local). Closing.", fd, G.chnlcntr[fd]);
 
 	mux_eof_to_iopipe(iofd, fd);
 	//if (G.pfds[pfdi].events != POLLIN)
@@ -628,7 +628,7 @@ static void client_handle_server_message(void)
 
     int len = from_iopipe(0, &chnl, &cntr, buf);
 
-    log4("chnl %d, cntr %d, len %d (%d)", chnl, cntr, len, G.nfds);
+    log4("chnl %d:%d, len %d (%d)", chnl, cntr, len, G.nfds);
 
     if (cntr != G.chnlcntr[chnl]) {
 	if (len > 0)
@@ -773,7 +773,7 @@ static int server_handle_internal_command(char ** args, int argc)
 	}
     }
     //tdbg("connect(%d) to %s:%d in progress", sd, args[1], iport);
-    log4("pollout %d %d", sd, G.nfds);
+    log4("set pollout %d nfds %d", sd, G.nfds);
     G.pfds[G.nfds].events = POLLOUT;
     return sd;
 }
@@ -781,6 +781,7 @@ static int server_handle_internal_command(char ** args, int argc)
 static int server_handle_connect_completed(int pfdi)
 {
     int fd = G.pfds[pfdi].fd;
+    log4("pollout received: %d ndfs %d", fd, G.nfds);
     G.pfds[pfdi].events = POLLIN;
     int error;
     socklen_t errsize = sizeof error;
@@ -896,7 +897,7 @@ static void server_handle_client_message(void)
 
     int pfdi = G.chnl2pfd[chnl];
 
-    log4("chnl %d, cntr %d, len %d, pfdi %d(/%d)", chnl,cntr,len,pfdi,G.nfds);
+    log4("chnl %d:%d, len %d, pfdi %d(/%d)", chnl, cntr, len, pfdi, G.nfds);
 
     if (cntr != G.chnlcntr[chnl]) {
 	if (len > 0)
