@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Sat 04 Nov 2017 17:49:17 +0200 too
+ * Last modified: Thu 16 Nov 2017 22:02:10 +0200 too
  */
 
 #define _DEFAULT_SOURCE // for newer linux environments
@@ -272,6 +272,7 @@ static void start(void)
                 len, ubuf[1] + 2);
         write(3, "\005", 2); // reply 05 00 (no authentication required)
 
+        // we trust such a small amout of data can be read on one call...
         len = read(3, buf, 5 + 255 + 2); // VER CMD RV ATYP DST.ADDR DST.PORT
         if (len < 10)
             die("Minimum socks5 request has 10 octets (got %d)", len);
@@ -292,7 +293,7 @@ static void start(void)
             may_serve_index_file_request(buf + 5, p);
             const char * addr;
             int al = find_dest(buf + 5, hlen, &net, &addr);
-            if (al) p += sprintf(p, "%s", addr) + 1;
+            if (al) p += sprintf(p, "%s", addr) + 1; // p was buf + 313
             else p += sprintf(p, "%s", buf + 5) + 1; // for warn() below
         }
         else if (buf[3] == 0x01) {  // ipv4 address
@@ -324,7 +325,11 @@ static void start(void)
         write(3, "\005\004\0\001" "\0\0\0\0" "\0", 10);
         exit(0);
     }
-    warn("Connecting %s:%d via %s", buf + 313, port, net); // XXX loglevel //
+    if (buf[0] == 5 && buf[3] == 0x03) {
+        warn("Connecting %s %s:%d via %s", buf + 5, buf + 313, port, net);
+    }
+    else
+        warn("Connecting %s:%d via %s", buf + 313, port, net); // XXX loglevel //
 
     int sd = connect_to_mxtx(default_mxtx_socket_path(net));
     if (sd < 0)
