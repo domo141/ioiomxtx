@@ -7,28 +7,28 @@
 ;;;	    All rights reserved
 ;;;
 ;;; Created: Tue 05 Sep 2017 21:50:02 EEST too
-;;; Last modified: Sun 29 Oct 2017 17:45:09 +0200 too
+;;; Last modified: Thu 16 Nov 2017 18:46:44 +0200 too
 
 ;;; This particular file is licenced under GPL v3 (and probably later)...
 
 ;;; execute emacs -l ./mxtx.el when testing (and mxtx-apu.sh emacs works later)
 
 (require 'tramp)
-;; replace with add-to-list someday ?
-(push
- (cons
-  "mxtx"
-  '((tramp-login-program "mxtx-rsh")
-    ;;(tramp-login-args (("%h") ("/bin/sh")))
-    ;;(tramp-login-args (("-t") ("%h") ("/bin/sh" "-i")))
-    (tramp-login-args (("-t") ("%h") ("/bin/sh")))
-    (tramp-remote-shell "/bin/sh")
-    (tramp-remote-shell-args ("-i") ("-c"))
+
+(add-to-list 'tramp-methods
+  '("mxtx" ;; based on "rsync" method
+    (tramp-login-program        "mxtx-rsh")
+    (tramp-login-args           (("%h")))
+    ;;(tramp-login-args           (("-e" "none") ("%h")))
+    (tramp-async-args           (("-q")))
+    (tramp-remote-shell         "/bin/sh")
+    (tramp-remote-shell-login   ("-l"))
+    (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "rsync")
     (tramp-copy-args            (("-t" "%k") ("-r") ("-e" "mxtx-io")))
     (tramp-copy-keep-date       t)
-    (tramp-copy-recursive t)))
- tramp-methods)
+    ;;(tramp-copy-keep-tmpfile    t)
+    (tramp-copy-recursive       t)))
 
 ;; tramp-verbose -- some hints to mxtx components debugging...?
 ;; (setq tramp-verbose 6) ;; M-x describe-variable ... to see levels
