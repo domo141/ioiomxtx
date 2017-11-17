@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Thu 16 Nov 2017 22:02:10 +0200 too
+ * Last modified: Fri 17 Nov 2017 18:27:49 +0200 too
  */
 
 #define _DEFAULT_SOURCE // for newer linux environments
@@ -40,7 +40,12 @@
 #include <sys/un.h>
 #include <sys/poll.h>
 #include <sys/time.h>
+#include <fcntl.h>
 #include <errno.h>
+
+// for xinet_connect()
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "mxtx-lib.h"
 
@@ -108,17 +113,31 @@ static void init(int argc, char * argv[])
     if (G.network == null) die("out of memory");
     char * p = G.network;
     for (int i = 1; argv[i]; i++) {
-        if (argv[i][0] == '\0' || (argv[i][0] == '/' && argv[i][1] == '\0')) {
-            warn("Empty option '' (local service) not yet supported");
-            continue;
-        }
         if (p - G.network > INITIAL_ALLOC_SIZE - 1024) {
             warn("too much input data"); // make better msg if really happens
             break;
         }
-        int sd = connect_to_mxtx(default_mxtx_socket_path(argv[i]));
-        if (sd < 0) continue;
-        write(sd, "\0\0\0\024~cat\0hosts-to-proxy\0", 24);
+        int sd;
+        if (argv[i][0] == '\0' || (argv[i][0] == '/' && argv[i][1] == '\0')) {
+            const char * home = getenv("HOME");
+            if (home == null) continue; // unlikely
+            char fn[4096];
+            if ((unsigned)snprintf(fn, sizeof fn,
+                                   "%s/.local/share/mxtx/hosts-to-proxy",
+                                   home) >= sizeof fn)
+                continue; // unlikely
+            sd = open(fn, O_RDONLY);
+            if (sd < 0) {
+                warn("Cannot open %s:", fn);
+                continue;
+            }
+            if (argv[i][0] != '\0') argv[i][0] = '\0';
+        }
+        else {
+            sd = connect_to_mxtx(default_mxtx_socket_path(argv[i]));
+            if (sd < 0) continue;
+            write(sd, "\0\0\0\024~cat\0hosts-to-proxy\0", 24);
+        }
         // we know argv[i] maxlen is less than 108
         p += snprintf(p, 256, "%c%s", (int)strlen(argv[i]), argv[i]) + 1;
         fprintf(stderr, "link: '%s'\n", argv[i]);
@@ -241,6 +260,31 @@ static float elapsed(void) {
         (float)(tv.tv_usec - G.stv.tv_usec) / 1000000;
 }
 
+static int xinet_connect(const char * addr, int iport /*, bool nonblock */)
+{
+    // copy from mxtx.c // (gener|lib)ify some day (w/ v6)...
+    // in the future name resolving (using 9.9.9.9 perhaps) perhaps
+    // basic ipv4 style for the time being...
+    in_addr_t iaddr = inet_addr(addr);
+    if (iaddr == INADDR_NONE) {
+        die("%s: invalid address", addr);
+    }
+    if (iport < 1 || iport > 65535) {
+        die("%d: invalid port", iport);
+    }
+    int sd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in ia = {
+        .sin_family = AF_INET,
+        .sin_port = htons(iport),
+        .sin_addr = { .s_addr = iaddr }
+    };
+    if (connect(sd, (struct sockaddr *)&ia, sizeof ia) < 0) {
+        close(sd);
+        die("Connection to %s:%d failed:", addr, iport);
+    }
+    return sd;
+}
+
 static void may_serve_index_file_request(const char * host, char * rbuf);
 
 static void start(void)
@@ -331,26 +375,32 @@ static void start(void)
     else
         warn("Connecting %s:%d via %s", buf + 313, port, net); // XXX loglevel //
 
-    int sd = connect_to_mxtx(default_mxtx_socket_path(net));
-    if (sd < 0)
-        die("Cannot connect to mxtx socket '%s':", net);
+    int sd;
+    if (net[0] == '\0') {
+        sd = xinet_connect(buf + 313, port);
+    }
+    else {
+        sd = connect_to_mxtx(default_mxtx_socket_path(net));
+        if (sd < 0)
+            die("Cannot connect to mxtx socket '%s':", net);
 
-    len = p - buf - 304 + sprintf(p, "%d", port) + 1;
-    ubuf[300] = ubuf[301] = 0; // protocol version
-    ubuf[302] = len / 256; ubuf[303] = len % 256; // msg length
-    write(sd, buf + 300, len + 4);
-    if (read(sd, buf, 1) != 1)
-        die("Did not get reply from mxtx socket '%s' (%s:%d):",
-            net, buf + 313, port);
-    if (buf[0] != 0) {
-        warn("Nonzero (%d) reply code for '%s:%d'", buf[0], buf + 313, port);
-        switch (ubuf[0]) {
-        case ECONNREFUSED: // check matching errno's (iirc sunos4 had some dif)
-            write(3, "\005\005\0\001" "\0\0\0\0" "\0", 10); break;
-        default:
-            write(3, "\005\001\0\001" "\0\0\0\0" "\0", 10); break;
+        len = p - buf - 304 + sprintf(p, "%d", port) + 1;
+        ubuf[300] = ubuf[301] = 0; // protocol version
+        ubuf[302] = len / 256; ubuf[303] = len % 256; // msg length
+        write(sd, buf + 300, len + 4);
+        if (read(sd, buf, 1) != 1)
+            die("Did not get reply from mxtx socket '%s' (%s:%d):",
+                net, buf + 313, port);
+        if (buf[0] != 0) {
+            warn("Nonzero (%d) reply code for '%s:%d'", buf[0],buf + 313,port);
+            switch (ubuf[0]) {
+            case ECONNREFUSED: // check matching errno's on every OS
+                write(3, "\005\005\0\001" "\0\0\0\0" "\0", 10); break;
+            default:
+                write(3, "\005\001\0\001" "\0\0\0\0" "\0", 10); break;
+            }
+            exit(0);
         }
-        exit(0);
     }
     // request granted, ipv4 address 10.0.0.7, port 16128
     write(3, "\005\000\0\001" "\012\0\0\007" "\077", 10);
