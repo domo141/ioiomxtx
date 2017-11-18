@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Mon 13 Nov 2017 11:06:29 +0200 too
+ * Last modified: Sat 18 Nov 2017 12:34:23 +0200 too
  */
 
 // for linux to compile w/ -std=c99
@@ -65,7 +65,8 @@ struct {
     char sigint;
     char sigquit;
     char sigterm;
-    char pad1, pad2;
+    char tty;
+    char pad1;
     struct termios saved_tio;
 } G;
 
@@ -76,47 +77,63 @@ static void reset_tio(void)
 
 static void sighandler(int sig);
 
+static void opts(int * argcp, char *** argvp) {
+    while (*argcp > 0 && (*argvp)[0][0] == '-') {
+        /**/ if ((*argvp)[0][1] == 't' && (*argvp)[0][2] == '\0')
+            G.tty = 1;
+        else if ((*argvp)[0][1] == 'e' && (*argvp)[0][2] == '\0') {
+            // drop -e <escape-char> (for now)
+            (*argcp)--; (*argvp)++;
+        }
+        else
+            die("'%s': unknown option", (*argvp)[0]);
+        (*argcp)--; (*argvp)++;
+        continue;
+    }
+}
+
+
 int main(int argc, char * argv[])
 {
-    if (argc <= 1)
-        die("Usage: %s [-t] remote [.] [command] [args]", argv[0]);
+    int caa = 0;
+    BB;
+    const char * prgname = argv[0];
+    argc--; argv++;
+    opts(&argc, &argv);
 
-    int tty = 0, caa = 0;
+    if (argc <= 0) die("Usage: %s [-t] remote [.] [command] [args]", prgname);
 
-    /* simple arg checking good enough for now */
-    while (argv[1][0] == '-') {
-        /**/ if (argv[1][1] == 't' && argv[1][2] == '\0')
-            tty = 1;
-        else
-            die("'%s': unknown option", argv[1]);
-        argc--; argv++;
+    const char * link = argv[0];
+    argc--; argv++;
+    opts(&argc, &argv);
 
-    }
-    if (argc == 2)
-        tty = 1;
+    if (argc < 0)  die("Usage: %s [-t] remote [.] [command] [args]", prgname);
 
-    if (argc > 2 && argv[2][0] == '.' && argv[2][1] == '\0') {
-        if (argc == 3)
+    if (argc == 0)
+        G.tty = 1;
+    else if (argc > 0 && argv[0][0] == '.' && argv[0][1] == '\0') {
+        if (argc == 1)
             die("After '.' command is required");
         caa = 1;
     }
 
-    if (tty && tcgetattr(0, &G.saved_tio) < 0) {
+    if (G.tty && tcgetattr(0, &G.saved_tio) < 0) {
         warn("Cannot read tty parameters. force remote tty mode");
-        tty = -1; // tristate //
+        G.tty = -1; // tristate //
     }
 
-    int sd = connect_to_mxtx(default_mxtx_socket_path(argv[1]));
+    int sd = connect_to_mxtx(default_mxtx_socket_path(link));
     if (sd < 0) exit(1);
     xmovefd(sd, 3);
+    BE;
     write(3, "\0\0\0\012" "mxtx-rshd\0" MXTX_RSHC_IDENT,
           4 + 10 + sizeof mxtx_rshc_ident);
     LPktRead pr;
     BB;
     unsigned char * p = (unsigned char *)pr.data;
-    if (tty) {
+    if (G.tty) {
          struct winsize ws;
-         if (tty < 0) {
+         if (G.tty < 0) {
              ws.ws_col = 80, ws.ws_row = 24;
          }
          else if (ioctl(0, TIOCGWINSZ, &ws) < 0) {
@@ -143,12 +160,12 @@ int main(int argc, char * argv[])
                 die("Environment variables takes too much space");
         }
     }
-    if (argc == 2) {
+    if (argc == 0) {
         *p++ = '\0'; *p++ = '\001'; *p++ = 's'; // interactive shell
     }
     else {
         unsigned char * s = p; p += 3;
-        for (int i = caa? 3: 2; i < argc; i++) {
+        for (int i = caa? 1: 0; i < argc; i++) {
             int l = strlen(argv[i]);
             if (p - pr.data >= isizeof pr.data - l - 4)
                 die("Command line and env. variables take too much space");
@@ -162,13 +179,14 @@ int main(int argc, char * argv[])
     // write whole command structure in one sweep
     (void)write(3, pr.data, p - pr.data);
     BE;
+    //BE;
     xreadfully(3, pr.data, sizeof mxtx_rshd_ident + 3);
     if (memcmp(pr.data, mxtx_rshd_ident, sizeof mxtx_rshd_ident) != 0)
         die("server ident mismatch");
     if (memcmp(pr.data + sizeof mxtx_rshd_ident, "\0\001" "a", 3) != 0)
         die("initial ack not received");
 
-    if (tty > 0) {
+    if (G.tty > 0) {
         struct termios tio = G.saved_tio;
         // see ttydefaults.h and then compare w/ what other sw does here
         cfmakeraw(&tio);
@@ -252,7 +270,7 @@ int main(int argc, char * argv[])
             G.mayhavesig = 0;
             unsigned char * p = pr.data;
             if (G.waitsigack) continue;
-            if (tty > 0) {
+            if (G.tty > 0) {
                 if (G.sighup) {
                     G.sighup = 0;
                     struct winsize ws;
