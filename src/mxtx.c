@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Tue 14 Nov 2017 18:30:00 +0200 too
+ * Last modified: Sat 18 Nov 2017 11:30:28 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -78,6 +78,7 @@
 #include <poll.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
