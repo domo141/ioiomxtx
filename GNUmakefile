@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Sun 12 Nov 2017 19:11:16 +0200 too
+# Last modified: Sun 19 Nov 2017 22:33:44 +0200 too
 
 SHELL = /bin/sh
 
@@ -101,7 +101,7 @@ unin:
 
 .PHONY: git-head
 git-head:
-	sed '1,/^$@.sh:/d;/^#.#eos/q' Gnumakefile | /bin/sh -s $@
+	sed '1,/^$@.sh:/d;/^#.#eos/q' GNUmakefile | /bin/sh -s $@
 
 git-head.sh:
 	test -n "$1" || exit 1 # embedded shell script; not to be made directly

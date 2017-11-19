@@ -8,17 +8,16 @@
 #           All rights reserved
 #
 # Created: Sun 12 Nov 2017 17:34:40 EET too
-# Last modified: Sun 12 Nov 2017 19:04:29 +0200 too
+# Last modified: Sun 19 Nov 2017 22:33:44 +0200 too
 
 case ${BASH_VERSION-} in *.*) set -o posix; shopt -s xpg_echo; esac
 case ${ZSH_VERSION-} in *.*) emulate ksh; esac
 
 set -euf
 
-version_num=1.1
+version_num=1.2
 
-# use : git log -2 --pretty='%h %T' :; to find out
-prev_tree=b1628aebceaf5a5b13a9449fb702e14a83dc39ea
+prev_commit=89b1529229e304472b4936c49abff14c7d84dc62
 
 LANG=C LC_ALL=C export LANG LC_ALL; unset LANGUAGE
 
@@ -26,10 +25,9 @@ if test -e .git # || test -e ../.git
 then
 	s () { set -- `exec git --no-pager log -1 --abbrev=7 --pretty='%h %ci'`
 	       ch=$1 cd=$2; }; s
-	cn=`git --no-pager log --pretty=%T | awk "
-			/$prev_tree/ { print NR - 2; exit }"`
+	cn=`git --no-pager log --oneline $prev_commit..HEAD | wc -l`
 	test "`exec git status --porcelain -uno`" && m=-mod || m=
-	test "$cn" || cn=9999
+	test "$cn" && cn=$((cn - 1)) || cn=9999
 	echo $version_num-$cn-g$ch-$cd$m
 	exit
 fi
