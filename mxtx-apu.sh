@@ -89,7 +89,10 @@ cmd_chromie () # start chromium / chrome browser w/ mxtx socks5 tunneling
 	set_chromie
 	ldpra=$mxtxdir/ldpreload-i2uconnect5.so
 	test -f "$ldpra" || die "'$ldpra' does not exist"
-	case $#${1-} in *[/.]*) ;; 1?*) set -- http://index-$1.html ;; esac
+	# shortcut to http://index-{link}.html (when $1 ~ /^[a-z0-9]{1,3}$/)
+	case ${1-} in [a-z0-9] | [a-z0-9][a-z0-9] | [a-z0-9][a-z0-9][a-z0-9] )
+		l=$1; shift; set -- http://index-$l.html "$@"
+	esac
 	export "LD_PRELOAD=$ldpra${LD_PRELOAD:+:$LD_PRELOAD}"
 	export LD_PRELOAD
 	x_exec "$chromie" --user-data-dir=$HOME/.config/$cbcnfdir \
