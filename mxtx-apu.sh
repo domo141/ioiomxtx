@@ -32,6 +32,7 @@ usage () {
 #gdbrun='gdb -ex run --args'
 
 sfs_dirs=/usr/libexec/openssh:/usr/lib/openssh:/usr/lib/ssh:/usr/libexec
+sfs_dirs=$sfs_dirs:/usr/sbin:/usr/bin # these 2 for cygwin support
 
 if test "${MXTX_APU_WRAPPER-}"
 then
