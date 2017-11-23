@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Sat 18 Nov 2017 12:34:23 +0200 too
+ * Last modified: Fri 24 Nov 2017 00:18:46 +0200 too
  */
 
 // for linux to compile w/ -std=c99
@@ -37,6 +37,7 @@
 //#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/poll.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <pty.h>
 //#include <.h>
@@ -67,7 +68,11 @@ struct {
     char sigterm;
     char tty;
     char pad1;
+    char * link;
     struct termios saved_tio;
+#if defined (__LP64__) && __LP64__
+    int pad2;
+#endif
 } G;
 
 static void reset_tio(void)
@@ -76,6 +81,39 @@ static void reset_tio(void)
 }
 
 static void sighandler(int sig);
+
+static void hook_exit(void);
+static void may_run_hook(bool entry)
+{
+    char buf[4096];
+    const char * home = getenv("HOME");
+    if (home == null) return; // unlikely !
+    size_t l = (size_t)snprintf(buf, sizeof buf,
+                                "%s/.local/share/mxtx/rsh-hook", home);
+    if (l >= sizeof buf) return; // unlikely !
+    if (access(buf, F_OK | X_OK) != 0) {
+        if (errno != ENOENT) warn("%s:", buf);
+        return; // if dir: user error //
+    }
+    pid_t pid = fork();
+    if (pid < 0) die("fork():");
+    if (pid > 0) {
+        if (entry) atexit(hook_exit);
+        waitpid(pid, NULL, 0);
+        return;
+    }
+    // child //
+    if (entry) setenv("MXTX_RSH_ENTRY", "t", 1);
+    else       setenv("MXTX_RSH_ENTRY", "", 1);
+    char * args[3];
+    args[0] = buf;
+    args[1] = G.link;
+    args[2] = null;
+    xexecvp(buf, args);
+}
+static void hook_exit(void) {
+    may_run_hook(false);
+}
 
 static void opts(int * argcp, char *** argvp) {
     while (*argcp > 0 && (*argvp)[0][0] == '-') {
@@ -96,14 +134,13 @@ static void opts(int * argcp, char *** argvp) {
 int main(int argc, char * argv[])
 {
     int caa = 0;
-    BB;
     const char * prgname = argv[0];
     argc--; argv++;
     opts(&argc, &argv);
 
     if (argc <= 0) die("Usage: %s [-t] remote [.] [command] [args]", prgname);
 
-    const char * link = argv[0];
+    G.link = argv[0];
     argc--; argv++;
     opts(&argc, &argv);
 
@@ -122,10 +159,13 @@ int main(int argc, char * argv[])
         G.tty = -1; // tristate //
     }
 
-    int sd = connect_to_mxtx(default_mxtx_socket_path(link));
+    if (argc == 0)
+        may_run_hook(true);
+
+    int sd = connect_to_mxtx(default_mxtx_socket_path(G.link));
     if (sd < 0) exit(1);
     xmovefd(sd, 3);
-    BE;
+
     write(3, "\0\0\0\012" "mxtx-rshd\0" MXTX_RSHC_IDENT,
           4 + 10 + sizeof mxtx_rshc_ident);
     LPktRead pr;

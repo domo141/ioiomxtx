@@ -1,0 +1,65 @@
+#!/bin/sh
+# -*- shell-script -*-
+
+# Copy this file as $HOME/.local/share/mxtx/rsh-hook (mode 755)
+# and edit according to your preferences (or do total rewrite).
+# This contains (example) code to change colors...
+
+set -euf
+
+# $1 = link -- currently no other possibilities supported
+# in the future there may be [command [args]] -- any options
+# (when passed here) will be informed via environment variables
+
+test $# = 1 || exit
+
+_set_colors () {
+        printf '\033]4;%d;#%s%s%s\007' 0 $1 $1 $1
+        printf '\033]4;%d;#%s%s%s\007' 1 $2 $1 $1
+        printf '\033]4;%d;#%s%s%s\007' 2 $1 $2 $1
+        printf '\033]4;%d;#%s%s%s\007' 3 $3 $3 $1
+        printf '\033]4;%d;#%s%s%s\007' 4 $1 $1 $2
+        printf '\033]4;%d;#%s%s%s\007' 5 $3 $1 $3
+        printf '\033]4;%d;#%s%s%s\007' 6 $1 $3 $3
+        printf '\033]4;%d;#%s%s%s\007' 7 $4 $4 $4
+        shift 4
+        printf '\033]4;%d;#%s%s%s\007'  8 $1 $1 $1
+        printf '\033]4;%d;#%s%s%s\007'  9 $2 $1 $1
+        printf '\033]4;%d;#%s%s%s\007' 10 $1 $2 $1
+        printf '\033]4;%d;#%s%s%s\007' 11 $3 $3 $1
+        printf '\033]4;%d;#%s%s%s\007' 12 $1 $1 $2
+        printf '\033]4;%d;#%s%s%s\007' 13 $3 $1 $3
+        printf '\033]4;%d;#%s%s%s\007' 14 $1 $3 $3
+        printf '\033]4;%d;#%s%s%s\007' 15 $4 $4 $4
+}
+# let's joke a bit... ;D
+darker_text_colours () { _set_colors 00 cd a0 e5  00 ee b8 f5; }
+lighter_text_colors () { _set_colors 00 f0 cd e5  00 ff e0 f5; }
+
+set_fg_color () { printf '\033]10;%s\007' "$1"; }
+set_bg_color () { printf '\033]11;%s\007' "$1"; }
+
+colorset () {
+        set_fg_color $1
+        set_bg_color $2
+        ${3}er_text_colo${4-}rs
+}
+
+# awk '{ printf "%02x %02x %02x\t%s\n", $1,$2,$3, $0 }' /usr/share/X11/rgb.txt
+
+test "$MXTX_RSH_ENTRY" || {
+        # exit: restore color (or set to something distinguishable)
+        colorset black gray90 dark u
+        exit
+}
+
+# entry: set colors based on link
+
+case $1 in 0) colorset lightred  black       light
+        ;; 1) colorset black     orchid      light
+        ;; 2) colorset black     slategray3  light
+        ;; a) colorset black    '#aa99bb'    light
+        ;; d) colorset black     thistle     dark u
+        ;; z) colorset black     gainsboro   dark u
+        ;; w) colorset '#80c0ff' black       light
+esac
