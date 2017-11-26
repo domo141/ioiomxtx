@@ -1,0 +1,9 @@
+# Ignore build results. Any other noise is visible.
+/ldpreload-i2ubind.so
+/ldpreload-i2uconnect5.so
+/libmxtx.a
+/mxtx
+/mxtx-io
+/mxtx-rsh
+/mxtx-rshd
+/mxtx-socksproxy
