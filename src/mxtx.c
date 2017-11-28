@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Sat 18 Nov 2017 11:30:28 +0200 too
+ * Last modified: Mon 27 Nov 2017 13:34:03 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -284,9 +284,9 @@ die(const char * format, ...)
     exit(1);
 }
 
-static void sleep100ms(void)
+static void sleep100ms(int c, int m)
 {
-    log2("sleep 100 msec (0.1 sec)");
+    log2("sleep 100 msec (0.1 sec) (%d/%d)", c, m);
     poll(0, 0, 100);
 }
 
@@ -359,13 +359,13 @@ static bool to_socket(int sd, void * data, size_t datalen)
 	return false;
     }
     char * buf = (char *)data;
-    int tries = 0;
+    int tries = 1;
     do {
 	// here if socket buffer full (typically 100kb of data unread)
 	// give peer 1/10 of a second to read it and retry.
 	// POLLOUT might inform that there is room for new data but
 	// write may still fail if the data doesn't fully fit ???
-	sleep100ms();
+	sleep100ms(tries, 100);
 
 	if (wlen < 0)
 	    wlen = 0;
@@ -390,9 +390,9 @@ static bool to_socket(int sd, void * data, size_t datalen)
 	    return true;
 	}
 	log4("%d: wlen %d (of %u):", sd, (int)wlen, (unsigned int)datalen);
-    } while (++tries < 100); // 100 times makes that 10 sec total.
+    } while (tries++ < 100); // 100 times makes that 10 sec total.
 
-    log1("Peer at %d too slow to read traffic. Dropping", sd);
+    log1("Peer #%d too slow to read traffic. Dropping", sd);
     return false;
 }
 

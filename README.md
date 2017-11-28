@@ -81,6 +81,9 @@ time), the connection will be dropped. In the case flow control is desired,
 the endpoints must have protocol to communicate that (so far I've managed
 fine without it).
 
+(That said, simple `mxtx-rsh {link} git -C {path/to/repo} log | less` can
+ be used to trigger this "feature" (when log long enough...).)
+
 Typically `ioio.pl` is used to start `mxtx` endpoints (for the time being)...
 
 ### build c source and install
