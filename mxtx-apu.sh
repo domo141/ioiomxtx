@@ -120,23 +120,25 @@ cmd_sshfs () # sshfs mount using mxtx tunnel
 		"either 'path' or 'mountpoint' is to have ':' but not both" \
 		"'reverse' mount (i.e. ':' in mountpoint) may have some security implications"
 	case $1 in *:*) case $2 in *:*) die "2 link:... paths!"; esac; esac
-	case $2 in *:*)
+	p=$1 m=$2; shift 2
+	case $m in *:*)
 		eval la=\$$# # last arg
 		# drop last arg
 		a=$1; shift; for arg; do set -- "$@" "$a"; a=$arg; shift; done
+		mp=${m#*:}; test "$mp" || mp=.
 		case $la
 		in '!') find_sftp_server
 		 # quite a bit of trial&error (in gitrepos.sh) to get there.
 		 x export FAKECHROOT_EXCLUDE_PATH=${sftp_server%/*}:/dev:/etc
 		 x_exec mxtx-io /// fakechroot \
-			/usr/bin/env /usr/sbin/chroot "$1" $sftp_server /// \
-			"${2%%:*}": sshfs "r:$1" "${2#*:}" -o slave
+			/usr/bin/env /usr/sbin/chroot "$p" $sftp_server /// \
+			"${m%%:*}": sshfs "r:$p" "$mp" -o slave "$@"
 		;; '!!')find_sftp_server
 		 x_exec mxtx-io /// $sftp_server /// \
-			"${2%%:*}": sshfs "r:$1" "${2#*:}" -o slave
+			"${m%%:*}": sshfs "r:$p" "$mp" -o slave "$@"
 		;; *)	exec >&2; echo
 		 echo Due to potential security implications to do reverse
-		 echo mount, enter either '!' to "'!!'" at the end of the
+		 echo mount, enter either '!' or "'!!'" at the end of the
 		 echo command line. "With ! fakechroot(1) attempts to chroot"
 		 echo sftp-server to the mounted directory. With "'!!'" such
 		 echo fake chrooting is not done -- peer may ptrace '(gdb!)'
@@ -144,11 +146,11 @@ cmd_sshfs () # sshfs mount using mxtx tunnel
 		 echo; exit 1
 		esac
 	esac
-	case $1 in *:*) ;; *) die "neither paths link:...!"; esac
+	case $p in *:*) ;; *) die "neither paths link:...!"; esac
 	# forward mount
 	command -v sshfs >/dev/null || die "'sshfs': no such command"
-	x_exec mxtx-io /// sshfs "$1" "$2" -o slave /// \
-		"${1%%:*}": env PATH=$sfs_dirs sftp-server
+	x_exec mxtx-io /// sshfs "$p" "$m" -o slave "$@" /// \
+		"${p%%:*}": env PATH=$sfs_dirs sftp-server
 }
 
 cmd_sftp () # like sftp, but via mxtx tunnel
