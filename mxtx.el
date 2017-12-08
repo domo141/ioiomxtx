@@ -7,7 +7,7 @@
 ;;;	    All rights reserved
 ;;;
 ;;; Created: Tue 05 Sep 2017 21:50:02 EEST too
-;;; Last modified: Thu 16 Nov 2017 18:46:44 +0200 too
+;;; Last modified: Fri 08 Dec 2017 21:33:08 +0200 too
 
 ;;; This particular file is licenced under GPL v3 (and probably later)...
 
@@ -18,7 +18,9 @@
 (add-to-list 'tramp-methods
   '("mxtx" ;; based on "rsync" method
     (tramp-login-program        "mxtx-rsh")
-    (tramp-login-args           (("%h")))
+    ;; executing /bin/sh is more robust than relying default (login) shell
+    (tramp-login-args           (("-t") ("%h") (".") ("/bin/sh" "-il")))
+    ;;(tramp-login-args           (("%h")))
     ;;(tramp-login-args           (("-e" "none") ("%h")))
     (tramp-async-args           (("-q")))
     (tramp-remote-shell         "/bin/sh")
