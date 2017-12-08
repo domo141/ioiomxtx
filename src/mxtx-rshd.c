@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sat 02 Sep 2017 18:42:37 EEST too
- * Last modified: Sat 28 Oct 2017 11:39:51 +0300 too
+ * Last modified: Sat 09 Dec 2017 00:40:43 +0200 too
  */
 
 #define execvp(f,a) __xexecvp(f,a)  // cheat constness...
@@ -142,7 +142,7 @@ static inline void pio(int fd, struct pollfd * pfd, char * buf, size_t buflen)
     int chnl = fd + '0' - 2;
     int len = read(fd, buf + 3, buflen - 3);
     if (len <= 0) {
-        if (len == 0
+        if (len == 0 || pfd->revents & POLLNVAL /* closed by us */
             || errno == EIO /* tty :O */) {
             // send eof, channel 1 or 2 //
             char msgbuf[4] = { 0, 2, 'x', chnl };
@@ -151,7 +151,7 @@ static inline void pio(int fd, struct pollfd * pfd, char * buf, size_t buflen)
                 wait_exit();
             pfd->fd = -pfd->fd;
         }
-        else die("XXX read(%d):", fd);
+        else die("XXX read(%d) (revents: %x):", fd, pfd->revents);
     }
     else {
         len += 1;
