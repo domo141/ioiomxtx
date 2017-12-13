@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Fri 24 Nov 2017 00:18:46 +0200 too
+ * Last modified: Wed 13 Dec 2017 22:06:58 +0200 too
  */
 
 // for linux to compile w/ -std=c99
@@ -69,6 +69,7 @@ struct {
     char tty;
     char pad1;
     char * link;
+    char env_link[128];
     struct termios saved_tio;
 #if defined (__LP64__) && __LP64__
     int pad2;
@@ -184,10 +185,13 @@ int main(int argc, char * argv[])
          *p++ = ws.ws_col / 256; *p++ = ws.ws_col % 256;
          *p++ = ws.ws_row / 256; *p++ = ws.ws_row % 256;
     }
+    snprintf(G.env_link, sizeof G.env_link, "MXTX_LINK=%s", G.link);
+    putenv(G.env_link);
     const char * pe[] = { "TERM","LANG","LANGUAGE","LC_CTYPE","LC_NUMERIC",
                           "LC_TIME","LC_COLLATE","LC_MONETARY","LC_MESSAGES",
                           "LC_PAPER","LC_NAME","LC_ADDRESS","LC_TELEPHONE",
-                          "LC_MEASUREMENT","LC_IDENTIFICATION","LC_ALL" };
+                          "LC_MEASUREMENT","LC_IDENTIFICATION","LC_ALL",
+                          "MXTX_LINK" };
     for (unsigned int i = 0; i < sizeof pe / sizeof (char *); i++) {
         // xxx could go through ** environ, perhaps some day ?
         char * e = getenv(pe[i]);

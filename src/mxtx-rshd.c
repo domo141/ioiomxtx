@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sat 02 Sep 2017 18:42:37 EEST too
- * Last modified: Sat 09 Dec 2017 00:40:43 +0200 too
+ * Last modified: Wed 13 Dec 2017 21:54:34 +0200 too
  */
 
 #define execvp(f,a) __xexecvp(f,a)  // cheat constness...
@@ -64,6 +64,7 @@ const char * _prg_ident = "rshd: ";
 struct {
     pid_t pid;
     int cmd_fds;
+    char env_pid[32];
 } G;
 
 static void exec_cmd(unsigned int havetty, const char* file, const char** argv)
@@ -171,6 +172,8 @@ int main(void)
     if (memcmp(pr.data, mxtx_rshc_ident, sizeof mxtx_rshc_ident) != 0)
         die("client ident mismatch");
     unsigned int tty = 0;
+    snprintf(G.env_pid, sizeof G.env_pid, "MXTX_PID=%d", getpid());
+    putenv(G.env_pid);
     BB;
     char xenv[1024];
     unsigned int xepos = 0;
