@@ -32,7 +32,7 @@
  * Created: Tue 22 Nov 2011 16:55:43 +0200 too
  * For ttt: Fri 03 Oct 2014 19:21:19 +0300 too
  * For mxtx: Sat 26 Aug 2017 21:24:28 +0300 too
- * Last modified: Thu 31 Aug 2017 18:09:17 +0300 too
+ * Last modified: Fri 15 Dec 2017 00:23:08 +0200 too
  */
 
 #define VERDATE "1.1 (2017-08-31)"
@@ -169,10 +169,8 @@ static void dwritebytes(const char * info, char * p, int l)
     write(2, info, strlen(info));
 
     buf[0] = ' ';
-    while (l--)
-    {
-	if (0 && *p > 32 && *p < 127)
-	{
+    while (l--) {
+	if (0 && *p > 32 && *p < 127) {
 	    buf[1] = *p++;
 	    write(2, buf, 2);
 	    continue;
@@ -195,9 +193,9 @@ static void vwarn(const char * format, va_list ap)
 
     vfprintf(stderr, format, ap);
     if (format[strlen(format) - 1] == ':')
-        fprintf(stderr, " %s\n", strerror(error));
+	fprintf(stderr, " %s\n", strerror(error));
     else
-        fputs("\n", stderr);
+	fputs("\n", stderr);
     fflush(stderr);
 }
 #if 0
