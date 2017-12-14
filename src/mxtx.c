@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Mon 27 Nov 2017 13:34:03 +0200 too
+ * Last modified: Thu 14 Dec 2017 20:37:56 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -125,6 +125,7 @@ struct {
     unsigned char chnlcntr[256];
     int nfds;
     int alarm_scheduled;
+    char env_pwd[256];
 } G;
 
 static void set_ident(const char * ident)
@@ -1073,6 +1074,10 @@ int main(int argc, char ** argv)
 	    NL, progname);
     }
     BE;
+
+    memcpy(G.env_pwd, "MXTX_PWD=", 9);
+    if (getcwd(G.env_pwd + 9, sizeof G.env_pwd - 9) != NULL)
+	putenv(G.env_pwd);
 
     if (memcmp(argv[1], "-s", 2) == 0) {
 	start_server(argv[1] + 2);
