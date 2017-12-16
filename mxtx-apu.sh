@@ -72,6 +72,42 @@ case $0 in */*/*) mxtxdir=$HOME/.local/share/mxtx
 	;; *)	mxtxdir=$HOME/.local/share/mxtx
 esac
 
+_mxtxpath () {
+	case $1
+	in "$MXTX_PWD"/*) p=${1#"$MXTX_PWD"/}
+	;; "$MXTX_PWD") p=
+	;; *) p=$1
+	esac
+	printf '%s\n' "$MXTX_LINK:$p"
+}
+
+cmd_path () # show file/dir paths -- most useful in mxtx-rsh shell
+{
+	if test $# = 0
+	then
+		printf 'pwd\n%s\n' "$PWD"
+		rwd=`exec readlink -f "$PWD"`
+		test "$rwd" = "$PWD" || printf '%s\n' "$rwd"
+		test "${MXTX_PWD-}" && test "${MXTX_LINK-}" || exit 0
+		_mxtxpath "$rwd"
+		echo
+		exit
+	fi
+	#else
+	for arg
+	do
+		if test -f "$arg"; then echo f
+		elif test -d "$arg"; then echo d
+		else echo -
+		fi
+		arg=`readlink -f "$arg"`
+		printf '%s\n' "$arg"
+		test "${MXTX_PWD-}" && test "${MXTX_LINK-}" || continue
+		_mxtxpath "$arg"
+	done
+	echo
+}
+
 cmd_sshmxtx () # create default forward tunnel using ssh (link '0:')
 {
 	test $# -ge 2 || usage 'link [user@]host [env=val [env...]' \
