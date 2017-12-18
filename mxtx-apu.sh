@@ -228,6 +228,15 @@ cmd_ping () # 'ping' (including time to execute `date` on destination)
 	x_exec /usr/bin/time mxtx-io "$1" date
 }
 
+cmd_exit () # exit all .mxtx processes running on this system (dry-run w/o '!')
+{
+	#pgrep -a '[.]mxtx' # -a option not in older pgreps
+	ps x | fgrep .mxtx  # if we also had -e, this would be unnecessary
+	test "${1-}" != '!' || x_exec pkill '[.]mxtx'
+
+	echo "Add '!' to the command line to exit the processes shown above"
+}
+
 cmd_source () # check source of given '$0' command
 {
 	set +x
@@ -254,7 +263,7 @@ case ${1-} in '')
 	echo ${0##*/} commands available:
 	echo
 	sed -n '/^cmd_[a-z0-9_]/ { s/cmd_/ /; s/ () [ #]*/                   /
-		s/$0/'"${0##*/}"'/g; s/\(.\{13\}\) */\1/p; }' "$0"
+		s/$0/'"${0##*/}"'/g; s/\(.\{11\}\) */\1/p; }' "$0"
 	echo
 	echo Command can be abbreviated to any unambiguous prefix.
 	echo
