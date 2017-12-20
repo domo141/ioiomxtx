@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Sun 19 Nov 2017 22:33:44 +0200 too
+# Last modified: Wed 20 Dec 2017 22:03:55 +0200 too
 
 SHELL = /bin/sh
 
@@ -52,6 +52,7 @@ install.sh:
 	test -n "$1" || exit 1 # embedded shell script; not to be made directly
 	die () { exit 1; }
 	set -euf
+	export LC_ALL=C LANG=C
 	echo
 	if test "$1" = YES=YES
 	then	mmkdir () { test -d "$1" || mkdir -vp "$1"; }
@@ -121,6 +122,30 @@ a:	#git-head
 		echo Note: not taking changes from \'dirty\' working tree!
 	@set -euf; set x `exec git log -1 --pretty='%h %ci'`; s=$$3-g$$2; \
 	set -x; exec git archive --prefix=mxtx-$$s/ -o mxtx-$$s.tar.gz HEAD
+
+# convenience helper to update mxtx over an mxtx link
+.PHONY: remote-update
+remote-update:
+	sed '1,/^$@.sh:/d;/^#.#eos/q' GNUmakefile | /bin/sh -s "$(MAKE)" "$D"
+
+remote-update.sh:
+	test -n "$1" || exit 1 # embedded shell script; not to be made directly
+	die () { printf %s\\n "$*" >&2; exit 1; }
+	set -euf
+	export LC_ALL=C LANG=C
+	test -n "$2" || die Usage':' $1 install D=dest
+	make=$1 D=$2
+	set x `exec git log -1 --pretty='%h %ci'`; s=$3-g$2;
+	die () { exit 1; }
+	set -x
+	test -f mxtx-$s.tar.gz || die mxtx-$s.tar.gz not made "($make a)"
+	mxtx-rsh -n "$D" . /bin/true
+	set +e
+	mxtx-rsh    "$D" . tar zxvf - < mxtx-$s.tar.gz
+	mxtx-rsh -n "$D" cd mxtx-$s '&&' make install YES=YES
+	mxtx-rsh -n "$D" . rm -rf mxtx-$s
+#	#eos
+	exit 1 # not reached
 
 clean:
 	rm -rf $(BIN) mxtx-lib.o libmxtx.a git-head *~ src/*~ _tmp
