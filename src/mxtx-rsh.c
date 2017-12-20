@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Wed 13 Dec 2017 22:06:58 +0200 too
+ * Last modified: Wed 20 Dec 2017 22:00:26 +0200 too
  */
 
 // for linux to compile w/ -std=c99
@@ -67,7 +67,7 @@ struct {
     char sigquit;
     char sigterm;
     char tty;
-    char pad1;
+    char nostdin;
     char * link;
     char env_link[128];
     struct termios saved_tio;
@@ -120,6 +120,8 @@ static void opts(int * argcp, char *** argvp) {
     while (*argcp > 0 && (*argvp)[0][0] == '-') {
         /**/ if ((*argvp)[0][1] == 't' && (*argvp)[0][2] == '\0')
             G.tty = 1;
+        else if ((*argvp)[0][1] == 'n' && (*argvp)[0][2] == '\0')
+            G.nostdin = 1;
         else if ((*argvp)[0][1] == 'e' && (*argvp)[0][2] == '\0') {
             // drop -e <escape-char> (for now)
             (*argcp)--; (*argvp)++;
@@ -139,15 +141,17 @@ int main(int argc, char * argv[])
     argc--; argv++;
     opts(&argc, &argv);
 
-    if (argc <= 0) die("Usage: %s [-t] remote [.] [command] [args]", prgname);
+#define USAGEFMT "Usage: %s [-t] [-n] remote [.] [command] [args]"
+    if (argc <= 0) die(USAGEFMT, prgname);
 
     G.link = argv[0];
     argc--; argv++;
     opts(&argc, &argv);
 
-    if (argc < 0)  die("Usage: %s [-t] remote [.] [command] [args]", prgname);
+    if (argc < 0) die(USAGEFMT, prgname);
+#undef USAGEFMT
 
-    if (argc == 0)
+    if (argc == 0 && G.nostdin == 0)
         G.tty = 1;
     else if (argc > 0 && argv[0][0] == '.' && argv[0][1] == '\0') {
         if (argc == 1)
@@ -252,9 +256,10 @@ int main(int argc, char * argv[])
     struct pollfd pfds[2];
     pfds[0].fd = 3; pfds[0].events = POLLIN;
     pfds[1].fd = 0; pfds[1].events = POLLIN;
+    int nfds = G.nostdin? 1: 2;
     while (1) {
         char ibuf[8192];
-        int n = poll(pfds, 2, -1);
+        int n = poll(pfds, nfds, -1);
         (void)n;
         if (pfds[0].revents) {
             unsigned char * datap;
