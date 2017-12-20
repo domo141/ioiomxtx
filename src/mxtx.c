@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Mon 18 Dec 2017 21:35:52 +0200 too
+ * Last modified: Wed 20 Dec 2017 21:54:54 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -1058,7 +1058,7 @@ int main(int argc, char ** argv)
     if (argc < 2) {
 	set_ident("mxtx " VERSION);
 #define NL "\n"
-	die("\n\nUsage: %s [-v*] -(s|c[socketname])"
+	die("\n\nUsage: %s [-v*] -(s[~]|c[socketname])"
 	    NL
 	    NL "  -c: act as client"
 	    NL "  -s: act as server"
@@ -1067,6 +1067,8 @@ int main(int argc, char ** argv)
 	    NL "  socketname: used by client for socket path. if path does not"
 	    NL "              contain '/'s, it resolves to common prefix, and"
 	    NL "              given path is suffixed to it. default is '0'."
+	    NL
+	    NL "  ~: used in -s to change server current directory to $HOME."
 #if defined(__linux__) && __linux__
 	    NL
 	    NL "  on linux, abstract socket namespace is used in common prefix."
