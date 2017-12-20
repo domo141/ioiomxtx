@@ -230,8 +230,8 @@ cmd_ping () # 'ping' (including time to execute `date` on destination)
 
 cmd_exit () # exit all .mxtx processes running on this system (dry-run w/o '!')
 {
-	#pgrep -a '[.]mxtx' # -a option not in older pgreps
-	ps x | fgrep .mxtx  # if we also had -e, this would be unnecessary
+	#pgrep -a '[.]mxtx'   # -a option not in older pgreps
+	ps x | grep '[.]mxtx' # if we also had -e, this would be unnecessary
 	test "${1-}" != '!' || x_exec pkill '[.]mxtx'
 
 	echo "Add '!' to the command line to exit the processes shown above"
