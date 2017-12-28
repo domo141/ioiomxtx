@@ -1,5 +1,7 @@
 #if 0 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*-
  set -euf; trg=${0##*''/}; trg=${trg%.c}; test ! -e "$trg" || rm "$trg"
+ uname=`exec uname`
+ case $uname in *WIN*) echo $0: does not work on $uname; exit 0 ;; esac
  WARN="-Wall -Wstrict-prototypes -Winit-self -Wformat=2" # -pedantic
  WARN="$WARN -Wcast-align -Wpointer-arith " # -Wfloat-equal #-Werror
  WARN="$WARN -Wextra -Wwrite-strings -Wcast-qual -Wshadow" # -Wconversion
@@ -22,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Fri 17 Nov 2017 18:27:49 +0200 too
+ * Last modified: Thu 28 Dec 2017 19:21:09 +0200 too
  */
 
 #define _DEFAULT_SOURCE // for newer linux environments

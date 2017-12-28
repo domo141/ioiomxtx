@@ -7,11 +7,11 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Wed 20 Dec 2017 22:03:55 +0200 too
+# Last modified: Thu 28 Dec 2017 19:22:05 +0200 too
 
 SHELL = /bin/sh
 
-BIN := mxtx mxtx-io mxtx-socksproxy mxtx-rshd mxtx-rsh
+BIN := mxtx mxtx-io mxtx-rshd mxtx-rsh mxtx-socksproxy
 BIN += ldpreload-i2ubind.so ldpreload-i2uconnect5.so
 
 # Note: all source file dependencies may not be listed (usually not a problem)
@@ -76,13 +76,13 @@ install.sh:
 	xcp mxtx.el to $HOME/.local/share/mxtx/
 	xcp addhost.sh to $HOME/.local/share/mxtx/
 	xcp mxtx-rshd to $HOME/.local/share/mxtx/
-	xcp mxtx-socksproxy as $HOME/.local/share/mxtx/socksproxy
-	xcp ldpreload-i2ubind.so to $HOME/.local/share/mxtx/
-	xcp ldpreload-i2uconnect5.so to $HOME/.local/share/mxtx/
 	xcp mxtx-io to $HOME/bin/
 	xcp mxtx-rsh to $HOME/bin/
 	xcp mxtx-cp.sh as $HOME/bin/mxtx-cp
 	xcp mxtx-apu.sh to $HOME/bin/
+	xcp mxtx-socksproxy as $HOME/.local/share/mxtx/socksproxy
+	xcp ldpreload-i2ubind.so to $HOME/.local/share/mxtx/
+	xcp ldpreload-i2uconnect5.so to $HOME/.local/share/mxtx/
 	echo
 	$yesyes || {
 		echo Enter '' make install YES=YES '' to do so.
