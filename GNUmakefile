@@ -7,12 +7,12 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Thu 28 Dec 2017 19:22:05 +0200 too
+# Last modified: Fri 29 Dec 2017 19:46:53 +0200 too
 
 SHELL = /bin/sh
 
 BIN := mxtx mxtx-io mxtx-rshd mxtx-rsh mxtx-socksproxy
-BIN += ldpreload-i2ubind.so ldpreload-i2uconnect5.so
+BIN += ldpreload-i2ubind.so ldpreload-i2uconnect5.so ldpreload-vsfa.so
 
 # Note: all source file dependencies may not be listed (usually not a problem)
 #       do `make clean all` at the end of development session...
@@ -43,6 +43,10 @@ mxtx-rsh: src/mxtx-rsh.c src/lpktread.ch libmxtx.a
 
 ldpreload-i2ubind.so ldpreload-i2uconnect5.so: src/ldpreload-i2usocket.c
 	sh $<
+
+ldpreload-vsfa.so: src/ldpreload-vsfa.c
+	sh $<
+
 
 YES ?= NO
 install: $(BIN)
@@ -83,6 +87,7 @@ install.sh:
 	xcp mxtx-socksproxy as $HOME/.local/share/mxtx/socksproxy
 	xcp ldpreload-i2ubind.so to $HOME/.local/share/mxtx/
 	xcp ldpreload-i2uconnect5.so to $HOME/.local/share/mxtx/
+	xcp ldpreload-vsfa.so to $HOME/.local/share/mxtx/
 	echo
 	$yesyes || {
 		echo Enter '' make install YES=YES '' to do so.

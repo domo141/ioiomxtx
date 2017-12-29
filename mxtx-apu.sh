@@ -221,6 +221,14 @@ _cmd_xpra () # xpra support (wip)
 	MXTX_APU_WRAPPER=xpra x_exec xpra --ssh="$0" "$xcmd" ssh:"$disp" "$@"
 }
 
+cmd_vsfa () # wrap open() and stat() syscalls for opportunistic remote access
+{
+	test $# != 0 || usage 'command [args]'
+	so=$HOME/.local/share/mxtx/ldpreload-vsfa.so
+	export LD_PRELOAD=$so${LD_PRELOAD:+:$LD_PRELOAD}
+	exec "$@"
+}
+
 cmd_ping () # 'ping' (including time to execute `date` on destination)
 {
 	x export TIME='elapsed: %e s'
