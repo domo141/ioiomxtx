@@ -19,7 +19,7 @@
  *          All rights reserved
  *
  * Created: Thu 14 Dec 2017 08:48:34 EET too
- * Last modified: Fri 29 Dec 2017 19:43:50 +0200 too
+ * Last modified: Fri 29 Dec 2017 21:46:12 +0200 too
  */
 
 /* "virtual soft file access" ld_preload library, a hacky module to
@@ -430,7 +430,7 @@ _rt _fn _args { \
     static _rt (*_fn##_next) _args = null; \
     if (! _fn##_next ) *(void**) (&_fn##_next) = dlsym_next(#_fn);
 
-#if 1
+#if 0
 #define cprintf(...) fprintf(stderr, __VA_ARGS__)
 #else
 #define cprintf(...) do {} while (0)
