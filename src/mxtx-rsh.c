@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Wed 20 Dec 2017 22:00:26 +0200 too
+ * Last modified: Sat 30 Dec 2017 15:43:33 +0200 too
  */
 
 // for linux to compile w/ -std=c99
@@ -304,7 +304,8 @@ int main(int argc, char * argv[])
                     // send eof //
                     char msgbuf[3] = { 0, 1, 'x' };
                     xwritefully(3, msgbuf, 3);
-                    pfds[1].fd = -1;
+                    // pfds[1].fd = -1; // not needed anymore
+                    nfds = 1;
                 }
                 else die("read from stdin failed:");
             }

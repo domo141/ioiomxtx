@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Thu 07 Sep 2017 16:52:39 EEST too
-# Last modified: Fri 29 Dec 2017 23:28:37 +0200 too
+# Last modified: Sat 30 Dec 2017 16:08:50 +0200 too
 
 ### code-too-remote ###
 use 5.8.1;
@@ -28,7 +28,7 @@ unless (@ARGV) {
 }
 
 my @xxdiff_opts;
-if (ord $ARGV[0] == 45) { # -
+if (ord $ARGV[0] == 45) { # '-'
     do {
 	$_ = shift @ARGV;
 	push @xxdiff_opts, $_;
@@ -95,11 +95,8 @@ sub run_xxdiff($$$$)
 
     my @xo = @xxdiff_opts;
 
-    #push @xo, '--indicate-input-processed', '--title1';
-    push @xo, '--title1';
-    if ($_[0] eq '/dev/null') { push @xo, 'added'; } else { push @xo, $_[1]; }
-    push @xo, '--title2';
-    if ($_[2] eq '/dev/null') { push @xo, 'deleted'; } else { push @xo, $_[3]; }
+    #push @xo, '--indicate-input-processed';
+    push @xo, '--title1', $_[1], '--title2', $_[3];
 
     system 'xxdiff', @xo, '--', $_[0], $_[2];
     #open P, '-|', 'xxdiff', @xo, '--', $_[0], $_[2];
@@ -118,42 +115,38 @@ else {
 
 my $lp = $path? "$link:$path/": "$link:";
 
+my $pnl = '';
 foreach (@lines) {
-    /:\d+(\d\d\d)\s\d+(\d\d\d)\s(\w+)[.]+\s(\w+)[.]+\s(\w)\s+(.*)/ or next;
-    print "$1  $2  $3  $4  $5  $6\n";
+    unless (/:\d+(\d\d\d)\s\d+(\d\d\d)\s(\w+)[.]+\s(\w+)[.]+\s(\w)\s+(.*)/) {
+	print '.'; $pnl = "\n"; next;
+    }
+    print "$pnl$1  $2  $3  $4  $5  $6\n"; $pnl = '';
     my $lf = '';
     my $rf = '';
-    if ($5 eq 'M') {
-	$lf = $3;
-	$rf = $4 if $4 ne '000000000000';
-    }
-    elsif ($5 eq 'A') {
-	$rf = $4 if $4 ne '000000000000';
-    }
-    elsif ($5 eq 'D') {
-	$lf = $3;
-    }
-    else { print "skip\n"; next; }
+    if    ($5 eq 'M') { $lf = $3; $rf = $4 if $4 ne '000000000000'; }
+    elsif ($5 eq 'A') { $rf = $4 if $4 ne '000000000000'; }
+    elsif ($5 eq 'D') { $lf = $3; }
+    else  { print "skip\n"; next; }
 
     syswrite $s, "$lf $rf\n";
     my $t; sysread $s, $t, 1;
     die unless $t;
     if ($5 eq 'M') {
 	$lf = $lp . ".git/tmp-$rpid.$lf";
-	if ($rf) { $lf = $lp . ".git/tmp-$rpid.$rf"; }
+	if ($rf) { $rf = $lp . ".git/tmp-$rpid.$rf"; }
 	else { $rf = $lp . $6; }
 	run_xxdiff $lf, "a:$1:$6", $rf, "b:$2:$6";
 	next;
     }
     if ($5 eq 'A') {
-	if ($rf) { $lf = $lp . ".git/tmp-$rpid.$rf"; }
+	if ($rf) { $rf = $lp . ".git/tmp-$rpid.$rf"; }
 	else { $rf = $lp . $6; }
-	run_xxdiff '/dev/null', '/dev/null', $rf, "b:$2:$6";
+	run_xxdiff '/dev/null', 'added', $rf, "b:$2:$6";
 	next;
     }
     # 'D'
     $lf = $lp . ".git/tmp-$rpid.$lf";
-    run_xxdiff $lf, "a:$1:$6", '/dev/null', '/dev/null';
+    run_xxdiff $lf, "a:$1:$6", '/dev/null', 'deleted';
 }
 
 __END__
@@ -249,7 +242,7 @@ sub remote_main ()
     syswrite STDOUT, join('', @lines);
     undef @lines;
     while (<STDIN>) {
-	unlink @tmps if @tmps;
+	unlink(@tmps), @tmps = () if @tmps;
 	my @blobs = split ' ';
 	foreach (@blobs) {
 	    #warn "-- $_";
