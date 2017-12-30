@@ -8,16 +8,13 @@
 #	    All rights reserved
 #
 # Created: Thu 07 Sep 2017 16:52:39 EEST too
-# Last modified: Sat 30 Dec 2017 16:08:50 +0200 too
+# Last modified: Sat 30 Dec 2017 17:40:48 +0200 too
 
 ### code-too-remote ###
 use 5.8.1;
 use strict;
 use warnings;
-
-my $rorl;
 ### end ###
-$rorl = 'local';
 
 use IO::Socket::UNIX;
 
@@ -61,7 +58,6 @@ while (<I>) {
     }
 }
 close I;
-print $s "\$rorl = '$link';\n";
 print $s "remote_main\n";
 print $s "__END__\n";
 
@@ -121,44 +117,35 @@ foreach (@lines) {
 	print '.'; $pnl = "\n"; next;
     }
     print "$pnl$1  $2  $3  $4  $5  $6\n"; $pnl = '';
-    my $lf = '';
-    my $rf = '';
-    if    ($5 eq 'M') { $lf = $3; $rf = $4 if $4 ne '000000000000'; }
-    elsif ($5 eq 'A') { $rf = $4 if $4 ne '000000000000'; }
-    elsif ($5 eq 'D') { $lf = $3; }
-    else  { print "skip\n"; next; }
+
+    if ($5 ne 'M' and $5 ne 'A' and $5 ne 'D') { print "skip\n"; next; }
+    my $lf = $3;
+    my $rf = ($5 eq 'D' or $4 ne '000000000000')? $4: './'.$6;
 
     syswrite $s, "$lf $rf\n";
-    my $t; sysread $s, $t, 1;
-    die unless $t;
+    $_ = <$s>;
+    die unless defined $_;
+    chomp;
+    ($lf, $rf) = split ' ', $_, 2;
+    $lf = $lp . $lf unless ord $lf == 47; # '/'dev/null
+    $rf = $lp . $rf unless ord $rf == 47; # '/'dev/null
     if ($5 eq 'M') {
-	$lf = $lp . ".git/tmp-$rpid.$lf";
-	if ($rf) { $rf = $lp . ".git/tmp-$rpid.$rf"; }
-	else { $rf = $lp . $6; }
 	run_xxdiff $lf, "a:$1:$6", $rf, "b:$2:$6";
 	next;
     }
     if ($5 eq 'A') {
-	if ($rf) { $rf = $lp . ".git/tmp-$rpid.$rf"; }
-	else { $rf = $lp . $6; }
 	run_xxdiff '/dev/null', 'added', $rf, "b:$2:$6";
 	next;
     }
     # 'D'
-    $lf = $lp . ".git/tmp-$rpid.$lf";
     run_xxdiff $lf, "a:$1:$6", '/dev/null', 'deleted';
 }
 
 __END__
 
 ### code-too-remote ###
-# note: these messages go to `mxtx -s` stderr
-sub pdie (@) {
-    syswrite(STDERR, "$rorl: $!\n"), exit(0) unless @_;
-    syswrite(STDERR, "$rorl: @_ $!\n"), exit(0) if $_[$#_] =~ /:$/;
-    syswrite(STDERR, "$rorl: @_\n");
-    exit;
-}
+
+# note: `die` output goes to mxtx -s stderr
 
 my @tmps;
 END { unlink @tmps if @tmps; }
@@ -166,43 +153,46 @@ sub openO($)
 {
     my $f = ".git/tmp-$$.$_[0]";
     push @tmps, $f;
-    open O, '>', $f or pdie;
+    open O, '>', $f or die $!;
+    return $f;
 }
 
+sub write_message($$)
+{
+    my $f = openO $_[0];
+    print O "$_[0]: $_[1]";
+    close O;
+    $_[0] = $f;
+}
 sub too_large($$)
 {
-    openO $_[0];
-    print O "$_[0]: $_[1]: larger than 524288 bytes";
-    close O;
+    write_message $_[0], "$_[1]: larger than 524288 bytes";
+}
+sub binary_file($)
+{
+    write_message $_[0], "binary content";
 }
 
 sub write_content($$)
 {
-    openO $_[0];
-    my $size = $_[1];
     my $buf;
     my $len = sysread F, $buf, 8192;
-    pdie if ($len <= 0);
+    die $! if ($len <= 0);
     if (index($buf, "\0") >= 0) {
-	print O "$_[1]: binary content";
-	close O;
+	binary_file $_[0];
 	return;
     }
+    my $f = openO $_[0];
     syswrite O, $buf;
-    $size -= $len;
+    my $size = $_[1] - $len;
     while ($size > 0) {
 	$len = sysread F, $buf, ($size > 65536)? 65536: $size;
-	pdie if ($len <= 0);
+	die $! if ($len <= 0);
 	syswrite O, $buf;
 	$size -= $len;
     }
     close O;
-}
-
-sub write_empty($)
-{
-    openO $_[0];
-    close O;
+    $_[0] = $f;
 }
 
 sub remote_main ()
@@ -243,17 +233,29 @@ sub remote_main ()
     undef @lines;
     while (<STDIN>) {
 	unlink(@tmps), @tmps = () if @tmps;
-	my @blobs = split ' ';
+	chomp;
+	my @blobs = split ' ', $_, 2;
 	foreach (@blobs) {
 	    #warn "-- $_";
-	    my $size = `git cat-file -s $_`; chomp $size;
-	    too_large($_, $size), next if $size > 524288;
-	    write_empty($_), next if $size == 0;
-	    open F, '-|', qw/git cat-file -p/, $_;
-	    write_content($_, $size);
-	    close F;
+	    if ($_ =~ s|^[.]\/||) {
+		my $size = -s $_;
+		die $! unless defined $size;
+		$_ = '/dev/null', next if $size == 0;
+		too_large($_, $size), next if $size > 524288;
+		binary_file($_), next if -B $_;
+	    }
+	    else {
+		$_ = '/dev/null', next if /^000000000000/;
+		my $size = `git cat-file -s $_`; chomp $size;
+		too_large($_, $size), next if $size > 524288;
+		$_ = '/dev/null', next if $size == 0;
+		open F, '-|', qw/git cat-file -p/, $_;
+		write_content($_, $size);
+		close F;
+	    }
 	}
-	syswrite STDOUT, 1;
+	# assignments to $_ replaces @blobs list items
+	syswrite STDOUT, "@blobs\n";
     }
 }
 ### end ###
