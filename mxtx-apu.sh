@@ -43,11 +43,6 @@ then
 		x_exec mxtx-io "$r" env PATH=$sfs_dirs sftp-server
 		exit not reached
 	fi
-	if test "$MXTX_APU_WRAPPER" = git
-	then	link=${MXTX_APU_LINK:-$1}; link=${link#//}
-		exec mxtx-io "$link" /bin/sh -c "exec $2"
-		exit not reached
-	fi
 	if test "$MXTX_APU_WRAPPER" = xpra
 	then	exec mxtx-io "$2" /bin/sh -c "exec $3"
 		exit not reached
@@ -194,17 +189,6 @@ cmd_sftp () # like sftp, but via mxtx tunnel
 	MXTX_APU_WRAPPER=sftp x_exec sftp -S "$0" "$@"
 }
 
-cmd_git () # git clone / fetch / push / pull / archive -- ssh remotes wrapped
-{
-	case ${1-} in //*) export MXTX_APU_LINK="$1"; shift ;; esac
-	test $# -gt 0 ||
-		usage '[//host-link-replacement] [git options] command [args]'\
-		  'h->l replacement is useful when mxtx link differs from '\
-		  'the ssh [user@]host (but rest of the repo path is the same)'
-	export GIT_SSH="$0" MXTX_APU_WRAPPER=git
-	x_exec git "$@"
-}
-
 cmd_emacs () # emacs, with loaded mxtx.el -- a bit faster if first arg is '!'
 {
 	test "${1-}" != '!' || { shift; set -- --eval '(mxtx!)' "$@"; }
@@ -243,6 +227,13 @@ cmd_exit () # exit all .mxtx processes running on this system (dry-run w/o '!')
 	test "${1-}" != '!' || x_exec pkill '[.]mxtx'
 
 	echo "Add '!' to the command line to exit the processes shown above"
+}
+
+cmd_hints () # hints of some more acute ways to utilize mxtx tools
+{
+	printf '%s\n' '' \
+  " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git clone git@ror:repo" \
+  " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git pull --rebase --autostash" ''
 }
 
 cmd_source () # check source of given '$0' command
