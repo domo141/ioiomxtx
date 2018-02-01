@@ -15,11 +15,11 @@
  *
  * Author: Tomi Ollila -- too ät iki piste fi
  *
- *      Copyright (c) 2015 Tomi Ollila
+ *      Copyright (c) 2017 Tomi Ollila
  *          All rights reserved
  *
  * Created: Thu 14 Dec 2017 08:48:34 EET too
- * Last modified: Fri 29 Dec 2017 21:46:12 +0200 too
+ * Last modified: Thu 01 Feb 2018 19:38:11 +0200 too
  */
 
 /* "virtual soft file access" ld_preload library, a hacky module to
@@ -242,7 +242,8 @@ static bool checkpeerid(int sd)
         return false;
     }
     return true;
-#elif __XXXsolaris__ // fixme, when known what and how...
+#elif defined (__XXXunsupp__) && __XXXunsupp__
+#error fixme, when known what and how...
     //getpeerucred(...);
     warn("Peer check unimplemented");
     return false;
