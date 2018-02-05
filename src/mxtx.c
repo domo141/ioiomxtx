@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Wed 20 Dec 2017 21:54:54 +0200 too
+ * Last modified: Mon 05 Feb 2018 06:47:05 -0800 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -527,7 +527,7 @@ static void unlink_socket_file_atexit(void)
 
 static int xubind_listen(char * path)
 {
-    int sd = xmkusock();
+    int sd = xsocket(AF_UNIX, SOCK_STREAM);
     int one = 1;
     setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 

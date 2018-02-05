@@ -12,7 +12,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 21:07:44 EEST too
- * Last modified: Sat 16 Sep 2017 11:03:49 +0300 too
+ * Last modified: Mon 05 Feb 2018 06:53:06 -0800 too
  */
 
 #ifndef MXTX_LIB_H
@@ -54,7 +54,7 @@ void seterr_linebuf(void);
 
 void sigact(int sig, void (*handler)(int), int flags);
 
-int xmkusock(void);
+int xsocket(int domain, int type);
 void xdup2(int o, int n);
 int xfcntl(int fd, int cmd, int arg);
 void xexecvp(const char * file, char *const argv[]) ATTRIBUTE ((noreturn));

@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 21:06:56 EEST too
- * Last modified: Sun 29 Oct 2017 11:40:00 +0200 too
+ * Last modified: Mon 05 Feb 2018 06:50:21 -0800 too
  */
 
 /* sh mxtx-lib.c will compile single mxtx-lib.o -- good for testing
@@ -94,9 +94,9 @@ void sigact(int sig, void (*handler)(int), int flags)
     sigaction(sig, &action, NULL);
 }
 
-int xmkusock(void)
+int xsocket(int domain, int type)
 {
-    int sd = socket(AF_UNIX, SOCK_STREAM, 0);
+    int sd = socket(domain, type, 0);
     if (sd < 0) die("socket:");
     return sd;
 }
@@ -285,7 +285,7 @@ closerr:
 
 int xbind_unix_port(struct sockaddr_un * saddr, int pathlen)
 {
-    int sd = xmkusock();
+    int sd = xsocket(AF_UNIX, SOCK_STREAM);
     int one = 1;
 #if 0
     close(sd); sd = socket(AF_INET, SOCK_STREAM, 0);
