@@ -8,7 +8,7 @@
  * Modified: Sat Jun 20 17:35:18 1998 too
  * Netpkt version: Sat Aug 25 13:33:30 EEST 2007 too
  * Here: Mon 28 Aug 2017 22:11:12 +0300 too
- * Last modified: Mon 04 Sep 2017 23:39:24 +0300 too
+ * Last modified: Wed 21 Feb 2018 05:59:36 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"): */
@@ -20,6 +20,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <errno.h>
+
+#ifndef MW_FALLTHROUGH
+#define MW_FALLTHROUGH do {} while (0)
+#endif
 
 #define char unsigned char
 struct lpktread
@@ -88,7 +92,7 @@ static int lpktread(LPktRead * pr, char ** datap)
 		pr->selected = true;
 		return 0;
 	    }
-	    /* FALL THROUGH */
+	    MW_FALLTHROUGH;
 
 	case STATE_LEN2:
 	    pr->len |= *pr->currp++;
@@ -114,7 +118,7 @@ static int lpktread(LPktRead * pr, char ** datap)
 	    pr->startp = pr->currp;
 	    pr->state = STATE_LENCHECK;
 
-	    /* FALL THROUGH */
+	    MW_FALLTHROUGH;
 
 	case STATE_LENCHECK:
 #if 0

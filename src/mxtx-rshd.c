@@ -1,15 +1,8 @@
 #if 0 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*-
  set -euf; trg=${0##*''/}; trg=${trg%.c}; test ! -e "$trg" || rm "$trg"
- WARN="-Wall -Wstrict-prototypes -Winit-self -Wformat=2" # -pedantic
- WARN="$WARN -Wcast-align -Wpointer-arith " # -Wfloat-equal #-Werror
- WARN="$WARN -Wextra -Wwrite-strings -Wcast-qual -Wshadow" # -Wconversion
- WARN="$WARN -Wmissing-include-dirs -Wundef -Wbad-function-cast -Wlogical-op"
- WARN="$WARN -Waggregate-return -Wold-style-definition"
- WARN="$WARN -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls"
- WARN="$WARN -Wnested-externs -Winline -Wvla -Woverlength-strings -Wpadded"
  case ${1-} in '') set x -O2; shift; esac
  #case ${1-} in '') set x -ggdb; shift; esac
- set -x; exec ${CC:-gcc} -std=c99 $WARN "$@" -o "$trg" "$0" -L. -lmxtx -lutil
+ set -x; exec ${CC:-gcc} -std=c99 "$@" -o "$trg" "$0" -L. -lmxtx -lutil
  exit $?
  */
 #endif
@@ -22,12 +15,14 @@
  *          All rights reserved
  *
  * Created: Sat 02 Sep 2017 18:42:37 EEST too
- * Last modified: Wed 13 Dec 2017 21:54:34 +0200 too
+ * Last modified: Wed 21 Feb 2018 05:58:08 +0200 too
  */
+
+#include "more-warnings.h"
 
 #define execvp(f,a) __xexecvp(f,a)  // cheat constness...
 
-#define _DEFAULT_SOURCE
+//#define _DEFAULT_SOURCE // defined in more-warnings.h
 #define _GNU_SOURCE // for some older linux environments
 
 #include <unistd.h>

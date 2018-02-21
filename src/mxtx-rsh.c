@@ -1,15 +1,8 @@
 #if 0 /* -*- mode: c; c-file-style: "stroustrup"; tab-width: 8; -*-
  set -euf; trg=${0##*''/}; trg=${trg%.c}; test ! -e "$trg" || rm "$trg"
- WARN="-Wall -Wstrict-prototypes -Winit-self -Wformat=2" # -pedantic
- WARN="$WARN -Wcast-align -Wpointer-arith " # -Wfloat-equal #-Werror
- WARN="$WARN -Wextra -Wwrite-strings -Wcast-qual -Wshadow" # -Wconversion
- WARN="$WARN -Wmissing-include-dirs -Wundef -Wbad-function-cast -Wlogical-op"
- WARN="$WARN -Waggregate-return -Wold-style-definition"
- WARN="$WARN -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls"
- WARN="$WARN -Wnested-externs -Winline -Wvla -Woverlength-strings -Wpadded"
  case ${1-} in '') set x -O2; shift; esac
  #case ${1-} in '') set x -ggdb; shift; esac
- set -x; exec ${CC:-gcc} -std=c99 $WARN "$@" -o "$trg" "$0" -L. -lmxtx
+ set -x; exec ${CC:-gcc} -std=c99 "$@" -o "$trg" "$0" -L. -lmxtx
  exit $?
  */
 #endif
@@ -22,12 +15,14 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Sat 30 Dec 2017 15:43:33 +0200 too
+ * Last modified: Wed 21 Feb 2018 06:01:40 +0200 too
  */
 
+#include "more-warnings.h"
+
 // for linux to compile w/ -std=c99
-#define _DEFAULT_SOURCE // Since glibc 2.19:
-#define _BSD_SOURCE // Glibc 2.19 and earlier:
+//#define _DEFAULT_SOURCE // Since glibc 2.19: -- defined in more-warnings.h
+//#define _BSD_SOURCE // Glibc 2.19 and earlier: -- ditto
 
 #include <unistd.h>
 #include <stdio.h>
