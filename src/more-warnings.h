@@ -35,7 +35,7 @@
 
 #if __GNUC__ >= 7
 
-#pragma GCC diagnostic error "-Wimplicit-fallthrough" // well, in -Wextra alrd
+#pragma GCC diagnostic error "-Wimplicit-fallthrough" // in -Wextra already ???
 
 #define MW_FALLTHROUGH __attribute__ ((fallthrough))
 #else
@@ -70,10 +70,19 @@
 #pragma GCC diagnostic error "-Winline"
 #pragma GCC diagnostic error "-Wvla"
 #pragma GCC diagnostic error "-Woverlength-strings"
+#pragma GCC diagnostic error "-Wuninitialized"
 
 //ragma GCC diagnostic error "-Wfloat-equal"
 //ragma GCC diagnostic error "-Werror"
 //ragma GCC diagnostic error "-Wconversion"
+
+// avoiding known problems...
+#if __GNUC__ == 4
+#ifndef __clang__
+#pragma GCC diagnostic warning "-Winline" // gcc 4.4.6
+#pragma GCC diagnostic warning "-Wuninitialized" // gcc 4.4.6, 4.8.5 ...
+#endif
+#endif
 
 #endif /* defined (__GNUC__) */
 
