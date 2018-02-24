@@ -12,7 +12,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 21:07:44 EEST too
- * Last modified: Mon 05 Feb 2018 06:53:06 -0800 too
+ * Last modified: Sat 24 Feb 2018 16:48:59 +0200 too
  */
 
 #ifndef MXTX_LIB_H
@@ -64,13 +64,16 @@ void xreadfully(int fd, void * buf, ssize_t len);
 void xwritefully(int fd, const void * buf, ssize_t len);
 
 struct sockaddr_un;
-int fill_sockaddr_un(struct sockaddr_un * addr, const char * format, ...)
-        ATTRIBUTE ((format (printf, 2, 3)));
-char * default_mxtx_socket_path(const char * suffix);
-
+struct sockaddr_un * fill_sockaddr_un(struct sockaddr_un * addr,
+                                      const char * format, ...)
+    ATTRIBUTE ((format (printf, 2, 3)));
+struct sockaddr_un * fill_mxtx_socket_path(struct sockaddr_un * uaddr,
+                                           const char * path, const char * x);
 bool checkpeerid(int sd);
-int connect_to_mxtx(const char * path);
-int xbind_unix_port(struct sockaddr_un * saddr, int pathlen);
+
+int connect_unix_stream_socket(struct sockaddr_un * addr);
+int connect_unix_stream_mxtx_socket(const char * path, const char * x);
+int xbind_listen_unix_socket(struct sockaddr_un * addr, int type);
 
 static inline void xmovefd(int ofd, int nfd) {
     if (ofd == nfd) return;

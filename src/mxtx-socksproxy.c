@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Thu 28 Dec 2017 19:21:09 +0200 too
+ * Last modified: Sat 24 Feb 2018 16:48:27 +0200 too
  */
 
 #define _DEFAULT_SOURCE // for newer linux environments
@@ -136,7 +136,7 @@ static void init(int argc, char * argv[])
             if (argv[i][0] != '\0') argv[i][0] = '\0';
         }
         else {
-            sd = connect_to_mxtx(default_mxtx_socket_path(argv[i]));
+            sd = connect_unix_stream_mxtx_socket(argv[i], "");
             if (sd < 0) continue;
             write(sd, "\0\0\0\024~cat\0hosts-to-proxy\0", 24);
         }
@@ -187,6 +187,7 @@ static void init(int argc, char * argv[])
             fprintf(stderr, " %s: %s\n", dp, ip);
         }
         *p++ = '\0'; // end link with zero-length field (no second)
+        close(sd);
     }
     fprintf(stderr, "\n");
     *p++ = '\0'; // end list w/ double \0's
@@ -199,12 +200,11 @@ static void init(int argc, char * argv[])
 
     struct sockaddr_un saddr;
 #if defined(__linux__) && __linux__
-    int addrlen = fill_sockaddr_un(&saddr, "%c/tmp/user-%d/un-s-1080",
-                                   0, getuid());
+    fill_sockaddr_un(&saddr, "%c/tmp/user-%d/un-s-1080", 0, getuid());
 #else
 #error please add support
 #endif
-    int sd = xbind_unix_port(&saddr, addrlen);
+    int sd = xbind_listen_unix_socket(&saddr, SOCK_STREAM);
     xmovefd(sd, 3);
 }
 
@@ -382,7 +382,7 @@ static void start(void)
         sd = xinet_connect(buf + 313, port);
     }
     else {
-        sd = connect_to_mxtx(default_mxtx_socket_path(net));
+        sd = connect_unix_stream_mxtx_socket(net, "");
         if (sd < 0)
             die("Cannot connect to mxtx socket '%s':", net);
 
@@ -450,7 +450,7 @@ static void may_serve_index_file_request(const char * host, char * rbuf)
     warn("Loading index.html from %s", rbuf);
 
     // some duplicate code!
-    int sd = connect_to_mxtx(default_mxtx_socket_path(rbuf));
+    int sd = connect_unix_stream_mxtx_socket(rbuf, "");
     if (sd < 0)
         // xxx create better (i.e. 'a') reply page perhaps
         die("Cannot connect to mxtx socket '%s':", rbuf);

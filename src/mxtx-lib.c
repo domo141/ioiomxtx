@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 21:06:56 EEST too
- * Last modified: Mon 05 Feb 2018 06:50:21 -0800 too
+ * Last modified: Sat 24 Feb 2018 16:46:14 +0200 too
  */
 
 /* sh mxtx-lib.c will compile single mxtx-lib.o -- good for testing
@@ -199,7 +199,8 @@ bool checkpeerid(int sd)
 }
 
 // :sockaddr_un.o
-int fill_sockaddr_un(struct sockaddr_un * addr, const char * format, ...)
+struct sockaddr_un * fill_sockaddr_un(struct sockaddr_un * addr,
+                                      const char * format, ...)
 {
     va_list ap;
     memset(addr, 0, sizeof *addr);
@@ -207,45 +208,35 @@ int fill_sockaddr_un(struct sockaddr_un * addr, const char * format, ...)
     // we lose one char. perhaps that is tolerable
     int pathlen = vsnprintf(addr->sun_path, sizeof addr->sun_path, format, ap);
     va_end(ap);
-    if ((unsigned)pathlen >= sizeof addr->sun_path)
-        die("socket path length %d too big", pathlen);
-    addr->sun_family = AF_UNIX;
-    return pathlen + offsetof(struct sockaddr_un, sun_path);
+    addr->sun_family = pathlen;
+    return addr;
 }
 
-// XXX change next, to write directly to sockaddr_un
-
-// :defpath.o
-char * default_mxtx_socket_path(const char * suffix)
+// :fillpath.o
+struct sockaddr_un * fill_mxtx_socket_path(struct sockaddr_un * uaddr,
+                                           const char * path, const char * x)
 {
-    static char path[sizeof (((struct sockaddr_un*)0)->sun_path)];
-    if (suffix == NULL) suffix = "0";
-    size_t len;
+    if (strchr(path, '/') != NULL)
+        return fill_sockaddr_un(uaddr, "%s%s", x, path);
 
+    // else
 #if defined(__linux__) && __linux__
     uid_t uid = getuid();
-    len = snprintf(path, sizeof path, "@/tmp/user-%d/mxtx,%s", uid, suffix);
-    path[0] = '\0';
+    return fill_sockaddr_un(uaddr, "%c/tmp/user-%d/mxtx%s,%s",0, uid, x, path);
 #else
     char * xdgrd = getenv("XDG_RUNTIME_DIR");
-    if (xdgrd) {
-        len = (size_t)snprintf(path, sizeof path, "%s/mxtx,%s", xdgrd, suffix);
-        if (len < sizeof path)
-            return path;
-    }
+    if (xdgrd)
+        return fill_sockaddr_un(uaddr, "%s/mxtx%s,%s", xdgrd, x, path);
+    // else
     uid_t uid = getuid();
     (void)snprintf(path, sizeof path, "/tmp/user-%d", uid);
     (void)mkdir(path, 0700);
-    len = snprintf(path, sizeof path, "/tmp/user-%d/mxtx,%s", uid, suffix);
+    return fill_sockaddr_un("/tmp/user-%d/mxtx%s,%s", uid, x,suffix);
 #endif
-    if (len >= sizeof path)
-        exit(77);
-
-    return path;
 }
 
-// :mxtxconnect.o
-int connect_to_mxtx(const char * path) // xxx more generic than name states...
+// :usconnect.o
+int connect_unix_stream_socket(struct sockaddr_un * addr)
 {
     int sd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sd < 0) {
@@ -255,23 +246,17 @@ int connect_to_mxtx(const char * path) // xxx more generic than name states...
     int one = 1;
     setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof one);
 
-    struct sockaddr_un addr = {
-        .sun_family = AF_UNIX
-    };
+    unsigned int pathlen = addr->sun_family;
+    addr->sun_family = AF_UNIX;
 
-    // we expect caller not to pass path ""
-    unsigned int pathlen = strlen(path + 1) + 1;
-
-    if (pathlen >= sizeof addr.sun_path) {
+    if (pathlen >= sizeof addr->sun_path) {
         warn("socket path too long (%d octets)", pathlen);
         goto closerr;
     }
-    memcpy(addr.sun_path, path, pathlen);
-
     pathlen += offsetof(struct sockaddr_un, sun_path);
-    if (connect(sd, (struct sockaddr *)&addr, pathlen) < 0) {
-        if (addr.sun_path[0] == '\0') addr.sun_path[0] = '@';
-        warn("connecting to mxtx port %s failed:", addr.sun_path);
+    if (connect(sd, (struct sockaddr *)addr, pathlen) < 0) {
+        if (addr->sun_path[0] == '\0') addr->sun_path[0] = '@';
+        warn("connecting %s failed:", addr->sun_path);
         goto closerr;
     }
     if (! checkpeerid(sd))
@@ -283,25 +268,40 @@ closerr:
     return -1;
 }
 
-int xbind_unix_port(struct sockaddr_un * saddr, int pathlen)
+// XXX mxtx nimeen jotenki
+int connect_unix_stream_mxtx_socket(const char * path, const char * x)
 {
-    int sd = xsocket(AF_UNIX, SOCK_STREAM);
+    struct sockaddr_un addr;
+    return connect_unix_stream_socket(fill_mxtx_socket_path(&addr, path, x));
+}
+
+
+int xbind_listen_unix_socket(struct sockaddr_un * addr, int type)
+{
+    int sd = xsocket(AF_UNIX, type);
     int one = 1;
 #if 0
     close(sd); sd = socket(AF_INET, SOCK_STREAM, 0);
-    struct sockaddr_in * iaddr = (struct sockaddr_in *)saddr;
+    struct sockaddr_in * iaddr = (struct sockaddr_in *)addr;
     memset(iaddr, 0, sizeof *iaddr); //INADDR_ANY
     iaddr->sin_family = AF_INET;
     iaddr->sin_port = htons(1080);
 #endif
     setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
 
-    if (bind(sd, (struct sockaddr *)saddr, pathlen) < 0) {
+    unsigned int pathlen = addr->sun_family;
+    addr->sun_family = AF_UNIX;
+
+    if (pathlen >= sizeof addr->sun_path)
+        die("socket path too long (%d octets)", pathlen);
+
+    pathlen += offsetof(struct sockaddr_un, sun_path);
+    if (bind(sd, (struct sockaddr *)addr, pathlen) < 0) {
         if (errno == EADDRINUSE)
             die("bind: address already in use\n"
                 "The socket '%s' exists and may be live\n"
                 "Remove the file and try again if the socket is stale",
-                saddr->sun_path[0]? saddr->sun_path: saddr->sun_path + 1);
+                addr->sun_path[0]? addr->sun_path: addr->sun_path + 1);
         die("bind:");
     }
     if (listen(sd, 5) < 0)

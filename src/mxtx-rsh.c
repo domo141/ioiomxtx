@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Wed 21 Feb 2018 06:01:40 +0200 too
+ * Last modified: Sat 24 Feb 2018 16:19:42 +0200 too
  */
 
 #include "more-warnings.h"
@@ -161,11 +161,11 @@ int main(int argc, char * argv[])
 
     if (argc == 0)
         may_run_hook(true);
-
-    int sd = connect_to_mxtx(default_mxtx_socket_path(G.link));
+    BB;
+    int sd = connect_unix_stream_mxtx_socket(G.link, "");
     if (sd < 0) exit(1);
     xmovefd(sd, 3);
-
+    BE;
     write(3, "\0\0\0\012" "mxtx-rshd\0" MXTX_RSHC_IDENT,
           4 + 10 + sizeof mxtx_rshc_ident);
     LPktRead pr;

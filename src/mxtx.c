@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Mon 05 Feb 2018 06:47:05 -0800 too
+ * Last modified: Sat 24 Feb 2018 16:48:27 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -111,7 +111,7 @@ struct {
     char loglevels[8];
     union {
 	struct {
-	    char * socket_file; // client only...
+	    struct sockaddr_un uaddr;
 	} c;
 	struct {
 	    char * local_path; // server only...
@@ -522,57 +522,7 @@ static int x_from_socket_to_iopipe(int pfdi, int iofd)
 
 static void unlink_socket_file_atexit(void)
 {
-    unlink(G.u.c.socket_file);
-}
-
-static int xubind_listen(char * path)
-{
-    int sd = xsocket(AF_UNIX, SOCK_STREAM);
-    int one = 1;
-    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
-
-    struct sockaddr_un addr = {
-	.sun_family = AF_UNIX
-    };
-
-#if defined(__linux__) && __linux__
-    int abstract;
-    if (path[0] == '\0') {
-	path[0] = '@';
-	abstract = 1;
-    }
-    else
-	abstract = 0;
-#endif
-
-    unsigned int pathlen = strlen(path);
-
-    if (pathlen >= sizeof addr.sun_path)
-	die("Path '%s' is too long", path);
-
-    memcpy(addr.sun_path, path, pathlen);
-
-#if defined(__linux__) && __linux__
-    if (abstract)
-	addr.sun_path[0] = '\0';
-#endif
-    pathlen += offsetof(struct sockaddr_un, sun_path);
-    if (bind(sd, (struct sockaddr *)&addr, pathlen) < 0) {
-	if (errno == EADDRINUSE)
-	    die("bind: address already in use\n"
-		"The socket '%s' exists and may be live\n"
-		"Remove the file and try again if the socket is stale", path);
-	die("bind:");
-    }
-#if defined(__linux__) && __linux__
-    if (! abstract)
-#endif
-	atexit(unlink_socket_file_atexit);
-
-    if (listen(sd, 5) < 0)
-	die("listen:");
-
-    return sd;
+    unlink(G.u.c.uaddr.sun_path);
 }
 
 static int send_new_conn_cmd_to_iopipe(int iofd, int chnl)
@@ -698,19 +648,18 @@ static void start_client(char * socket_path)
 {
     set_ident("c");
 
-    if (socket_path[0] == '\0')
-	G.u.c.socket_file = default_mxtx_socket_path("0");
-    else if (strchr(socket_path, '/') == null)
-	G.u.c.socket_file = default_mxtx_socket_path(socket_path);
-    else {
-	G.u.c.socket_file = socket_path;
+    fill_mxtx_socket_path(&G.u.c.uaddr,
+			  socket_path[0] == '\0'? "0": socket_path, "");
+
 #if defined(__linux__) && __linux__
-	if (socket_path[0] == '@' && socket_path[1] != '\0')
-	    socket_path[0] = '\0';
+    if (socket_path[0] == '@' && strchr(socket_path, '/') != null)
+	G.u.c.uaddr.sun_path[0] = 0;
 #endif
-    }
+    if (G.u.c.uaddr.sun_path[0] != 0)
+	atexit(unlink_socket_file_atexit);
+
     (void)close(3);
-    int sd = xubind_listen(G.u.c.socket_file);
+    int sd = xbind_listen_unix_socket(&G.u.c.uaddr, SOCK_STREAM);
     if (sd != 3)
 	die("Unexpected fd '%d' (not 3) for client socket", sd);
 

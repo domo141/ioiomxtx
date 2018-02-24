@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 20:24:06 EEST too
- * Last modified: Sun 12 Nov 2017 12:18:33 +0200 too
+ * Last modified: Sat 24 Feb 2018 16:17:36 +0200 too
  */
 
 #include <unistd.h>
@@ -82,7 +82,7 @@ static int rexec(char * lnk, char ** rcmdv)
     rcmdline[2] = (p - rcmdline - 4) / 256;
     rcmdline[3] = (p - rcmdline - 4) & 255;
 
-    int sd = connect_to_mxtx(default_mxtx_socket_path(lnk));
+    int sd = connect_unix_stream_mxtx_socket(lnk, "");
     if (sd < 0) exit(1);
     write(sd, rcmdline, p - rcmdline);
     return sd;
