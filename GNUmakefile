@@ -7,12 +7,13 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Fri 29 Dec 2017 19:46:53 +0200 too
+# Last modified: Mon 26 Feb 2018 23:38:55 +0200 too
 
 SHELL = /bin/sh
 
-BIN := mxtx mxtx-io mxtx-rshd mxtx-rsh mxtx-socksproxy
-BIN += ldpreload-i2ubind.so ldpreload-i2uconnect5.so ldpreload-vsfa.so
+BIN := mxtx mxtx-io mxtx-rshd mxtx-rsh mxtx-socksproxy mxtx-dgramtunneld
+BIN += ldpreload-i2ubind.so ldpreload-i2uconnect5.so
+BIN += ldpreload-vsfa.so ldpreload-moshclienthax.so
 
 # Note: all source file dependencies may not be listed (usually not a problem)
 #       do `make clean all` at the end of development session...
@@ -31,20 +32,22 @@ libmxtx.a: src/mxtx-lib.c src/mxtx-lib.h
 mxtx-io: src/mxtx-io.c libmxtx.a
 	sh $<
 
-mxtx-socksproxy: src/mxtx-socksproxy.c libmxtx.a
-	sh $<
-
 mxtx-rshd: src/mxtx-rshd.c src/lpktread.ch libmxtx.a
 	sh $<
 
 mxtx-rsh: src/mxtx-rsh.c src/lpktread.ch libmxtx.a
 	sh $<
 
+mxtx-socksproxy: src/mxtx-socksproxy.c libmxtx.a
+	sh $<
+
+mxtx-dgramtunneld: src/mxtx-dgramtunneld.c libmxtx.a
+	sh $<
 
 ldpreload-i2ubind.so ldpreload-i2uconnect5.so: src/ldpreload-i2usocket.c
 	sh $<
 
-ldpreload-vsfa.so: src/ldpreload-vsfa.c
+ldpreload-%.so: src/ldpreload-%.c
 	sh $<
 
 
@@ -84,10 +87,12 @@ install.sh:
 	xcp mxtx-rsh to $HOME/bin/
 	xcp mxtx-cp.sh as $HOME/bin/mxtx-cp
 	xcp mxtx-apu.sh to $HOME/bin/
+	xcp mxtx-mosh.pl as $HOME/bin/mxtx-mosh
 	xcp mxtx-socksproxy as $HOME/.local/share/mxtx/socksproxy
 	xcp ldpreload-i2ubind.so to $HOME/.local/share/mxtx/
 	xcp ldpreload-i2uconnect5.so to $HOME/.local/share/mxtx/
 	xcp ldpreload-vsfa.so to $HOME/.local/share/mxtx/
+	xcp ldpreload-moshclienthax.so to $HOME/.local/share/mxtx/
 	echo
 	$yesyes || {
 		echo Enter '' make install YES=YES '' to do so.

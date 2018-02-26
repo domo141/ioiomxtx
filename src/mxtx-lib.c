@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 21:06:56 EEST too
- * Last modified: Sat 24 Feb 2018 16:46:14 +0200 too
+ * Last modified: Mon 26 Feb 2018 18:56:02 +0200 too
  */
 
 /* sh mxtx-lib.c will compile single mxtx-lib.o -- good for testing
@@ -281,7 +281,7 @@ int xbind_listen_unix_socket(struct sockaddr_un * addr, int type)
     int sd = xsocket(AF_UNIX, type);
     int one = 1;
 #if 0
-    close(sd); sd = socket(AF_INET, SOCK_STREAM, 0);
+    close(sd); sd = socket(AF_INET, type, 0);
     struct sockaddr_in * iaddr = (struct sockaddr_in *)addr;
     memset(iaddr, 0, sizeof *iaddr); //INADDR_ANY
     iaddr->sin_family = AF_INET;
@@ -304,7 +304,7 @@ int xbind_listen_unix_socket(struct sockaddr_un * addr, int type)
                 addr->sun_path[0]? addr->sun_path: addr->sun_path + 1);
         die("bind:");
     }
-    if (listen(sd, 5) < 0)
+    if (type == SOCK_STREAM && listen(sd, 5) < 0)
         die("listen:");
 
     return sd;
