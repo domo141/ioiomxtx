@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 03 Feb 2018 19:31:00 EET too
-# Last modified: Mon 26 Feb 2018 23:40:06 +0200 too
+# Last modified: Tue 27 Feb 2018 21:45:57 +0200 too
 
 use 5.8.1;
 use strict;
@@ -42,12 +42,13 @@ sub get_dgt_port($) {
 
 my $dgt_port = get_dgt_port $ARGV[0];
 if ($dgt_port == 0) {
-    system './mxtx-dgramtunneld', $ARGV[0];
+    system $ENV{HOME} . '/.local/share/mxtx/mxtx-dgramtunneld', $ARGV[0];
     $dgt_port = get_dgt_port $ARGV[0];
     die if $dgt_port == 0
 }
 
-my $term_colors = qx/mosh-client -c/; chomp $term_colors; # w/o shell (straced)
+my $term_colors = qx/mosh-client -c/; die unless defined $term_colors;
+chomp $term_colors;
 #print $term_colors, "\n";
 
 # adapted from mosh(1)
@@ -70,12 +71,15 @@ my $srv_cmd = join "\0", ( qw/mosh-server new -c/, $term_colors,
 			   qw/-i 127.0.0.1/, @lc_opts, "" );
 syswrite S, pack('xxn', length($srv_cmd)) . $srv_cmd;
 
-$_ = <S>;
-
-die "Unexpected mosh-server reply $_\n" unless /MOSH CONNECT (\d+) (\S+)/;
-my ($port, $key) = ($1, $2);
+my ($port, $key);
+while (<S>) {
+    next if /^\s*$/;
+    die "Unexpected mosh-server reply '$_'\n" unless /MOSH CONNECT (\d+) (\S+)/;
+    ($port, $key) = ($1, $2);
+    last;
+}
+die "No reply from mosh-server (no mosh-server?)\n" unless defined $port;
 print $port, $key, "\n";
-
 close S or die $!;
 
 $ENV{ 'MOSH_KEY' } = $key;

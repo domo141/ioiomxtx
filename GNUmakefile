@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Mon 26 Feb 2018 23:38:55 +0200 too
+# Last modified: Tue 27 Feb 2018 20:55:29 +0200 too
 
 SHELL = /bin/sh
 
@@ -88,6 +88,7 @@ install.sh:
 	xcp mxtx-cp.sh as $HOME/bin/mxtx-cp
 	xcp mxtx-apu.sh to $HOME/bin/
 	xcp mxtx-mosh.pl as $HOME/bin/mxtx-mosh
+	xcp mxtx-dgramtunneld to $HOME/.local/share/mxtx/
 	xcp mxtx-socksproxy as $HOME/.local/share/mxtx/socksproxy
 	xcp ldpreload-i2ubind.so to $HOME/.local/share/mxtx/
 	xcp ldpreload-i2uconnect5.so to $HOME/.local/share/mxtx/
