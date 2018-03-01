@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 03 Feb 2018 19:31:00 EET too
-# Last modified: Tue 27 Feb 2018 21:45:57 +0200 too
+# Last modified: Thu 01 Mar 2018 22:33:55 +0200 too
 
 use 5.8.1;
 use strict;
@@ -40,9 +40,11 @@ sub get_dgt_port($) {
     return $port;
 }
 
+my $mxtxdir = $ENV{HOME} . '/.local/share/mxtx';
+
 my $dgt_port = get_dgt_port $ARGV[0];
 if ($dgt_port == 0) {
-    system $ENV{HOME} . '/.local/share/mxtx/mxtx-dgramtunneld', $ARGV[0];
+    system $mxtxdir . '/mxtx-dgramtunneld', $ARGV[0];
     $dgt_port = get_dgt_port $ARGV[0];
     die if $dgt_port == 0
 }
@@ -63,24 +65,21 @@ foreach (qw/LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY
 
 # remote from here and down to m/^__E[N]D__/ for local mosh testing...
 
-socket S, AF_UNIX, SOCK_STREAM, 0 or die 'socket: ', $!;
-my $to = pack('Sxa*', AF_UNIX, "/tmp/user-1000/mxtx,$ARGV[0]");
-connect S, $to or die $!;
-
-my $srv_cmd = join "\0", ( qw/mosh-server new -c/, $term_colors,
-			   qw/-i 127.0.0.1/, @lc_opts, "" );
-syswrite S, pack('xxn', length($srv_cmd)) . $srv_cmd;
+open P, '-|', qw/mxtx-rsh -t/, $ARGV[0],
+  qw/. mosh-server new -c/, $term_colors, qw/-i 127.0.0.1/, @lc_opts
+  or die $!;
 
 my ($port, $key);
-while (<S>) {
+while (<P>) {
     next if /^\s*$/;
     die "Unexpected mosh-server reply '$_'\n" unless /MOSH CONNECT (\d+) (\S+)/;
     ($port, $key) = ($1, $2);
     last;
 }
+0 while (sysread (P, $_, 512) > 0); # strace -ff -o x ... told 341 bytes read
 die "No reply from mosh-server (no mosh-server?)\n" unless defined $port;
-print $port, $key, "\n";
-close S or die $!;
+#print $port, $key, "\n";
+close P or die $!;
 
 $ENV{ 'MOSH_KEY' } = $key;
 #$ENV{ 'MOSH_PREDICTION_DISPLAY' } = $predict;
@@ -92,10 +91,10 @@ $ENV{ 'MXTX_MOSH_PORT' } = $port;
 
 my $ldpl = $ENV{LD_PRELOAD};
 if ($ldpl) {
-    $ENV{LD_PRELOAD} = $ENV{HOME} . '/.local/share/mxtx/ldpreload-moshclienthax.so:' . $ldpl;
+    $ENV{LD_PRELOAD} = $mxtxdir . '/ldpreload-moshclienthax.so:' . $ldpl;
 }
 else {
-    $ENV{LD_PRELOAD} = $ENV{HOME} . '/.local/share/mxtx/ldpreload-moshclienthax.so'
+    $ENV{LD_PRELOAD} = $mxtxdir . '/ldpreload-moshclienthax.so';
 }
 
 exec qw/mosh-client 127.0.0.1/, $dgt_port;
