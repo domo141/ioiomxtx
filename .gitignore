@@ -2,9 +2,11 @@
 /ldpreload-i2ubind.so
 /ldpreload-i2uconnect5.so
 /ldpreload-vsfa.so
+/ldpreload-moshclienthax.so
 /libmxtx.a
 /mxtx
 /mxtx-io
 /mxtx-rsh
 /mxtx-rshd
 /mxtx-socksproxy
+mxtx-dgramtunneld

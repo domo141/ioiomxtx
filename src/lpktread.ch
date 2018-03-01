@@ -8,7 +8,7 @@
  * Modified: Sat Jun 20 17:35:18 1998 too
  * Netpkt version: Sat Aug 25 13:33:30 EEST 2007 too
  * Here: Mon 28 Aug 2017 22:11:12 +0300 too
- * Last modified: Wed 21 Feb 2018 05:59:36 +0200 too
+ * Last modified: Thu 01 Mar 2018 19:53:13 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"): */
@@ -146,6 +146,16 @@ static int lpktread(LPktRead * pr, char ** datap)
     /* NOTREACHED */
     return 0;
 }
+
+/* a bit hacky, but useful, internals... */
+#ifdef LPKTREAD_HAVE_PEEK /* added 2018-03-01 */
+static const char * _lpktread_peek(LPktRead * pr, int bytes)
+{
+    if (pr->endp - pr->currp >= bytes)
+	return pr->currp;
+    return NULL;
+}
+#endif /* HAVE_LPKTREAD_PEEK */
 #undef char
 
 /*

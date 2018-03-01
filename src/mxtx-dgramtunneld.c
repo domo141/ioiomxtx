@@ -15,8 +15,10 @@
  *          All rights reserved
  *
  * Created: Mon 05 Feb 2018 04:49:13 -0800 too
- * Last modified: Mon 26 Feb 2018 23:26:33 +0200 too
+ * Last modified: Thu 01 Mar 2018 20:49:35 +0200 too
  */
+
+// hint: strace -f [-o of] ... and strace -p ... are useful when inspecting...
 
 #include "more-warnings.h"
 
@@ -40,9 +42,6 @@
 #include <endian.h> //for older compilers not defining __BYTE_ORDER__ & friends
 
 #include "mxtx-lib.h"
-
-#define BB {
-#define BE }
 
 #define null ((void*)0)
 
@@ -68,7 +67,7 @@
 #error unknown ENDIAN
 #endif
 
-#define DBG 1
+#define DBG 0
 #if DBG
 #define dprintf(...) fprintf(stderr, __VA_ARGS__)
 #define dprintf0(...) do { } while (0)
@@ -78,7 +77,8 @@
 #endif
 
 
-#define LPKTREAD_DATA_BUFFER_SIZE 2048 // let's see...
+#define LPKTREAD_DATA_BUFFER_SIZE 4097 // seen 1272-sized udp datagrams...
+#define LPKTREAD_HAVE_PEEK 1
 #include "lpktread.ch"
 
 const char * _prg_ident = "mxtx-dgramtunneld: ";
@@ -168,7 +168,7 @@ static bool connect_to_server_fd_5(const char * lnk)
     write(5, cmd, sizeof cmd);
 
     // in case of failure no need to close fd 5, will be dup2()d over next time
-    return initial_protosync(5, "mxtxdtc0", "mxtxdts0");
+    return initial_protosync(5, "mxtxdtc1", "mxtxdts1");
 }
 
 static void client(const char * lnk)
@@ -196,20 +196,24 @@ static void client(const char * lnk)
     };
     struct { unsigned short sport; unsigned short cport; } portmap[1024];
     memset(portmap, 0, sizeof portmap);
-    time_t last_live_try = 0;
+    time_t next_live_try = 0;
+    time_t next_ping_try = time(null);
+    int sent_after_recv = 0;
     LPktRead pr;
     lpktread_init(&pr, 5);
 
     while (1) {
         (void)poll(pfds, 3, -1);
-        if (pfds[0].revents) {
+        if (pfds[0].revents) { // msg from tunnel
             unsigned char * datap;
             int len;
+            sent_after_recv = 0;
             while ( (len = lpktread(&pr, &datap)) != 0) {
                 if (len < 3) { // XXX
+                    if (len == 2) goto next1; // pong received
                     pfds[0].fd = -1;
                     close(5);
-                    last_live_try = time(null) - 10;
+                    next_live_try = time(null);
                     goto next1;
                 }
                 int sport = datap[0] * 256 + datap[1];
@@ -242,16 +246,31 @@ static void client(const char * lnk)
             if (len < 0 || len > isizeof sbuf - 4) {
                 die("XXX: len %d;", len);
             }
-            if (last_live_try != 0) {
+            if (next_live_try != 0) {
                 // disconnected...
                 time_t ct = time(null);
-                if (ct - last_live_try < 10) goto next2;
+                if (ct - next_live_try < 0) goto next2;
                 if (! connect_to_server_fd_5(lnk)) {
-                    last_live_try = ct;
+                    next_live_try = ct + 10;
                     goto next2;
                 }
-                last_live_try = 0;
+                next_live_try = 0;
+                sent_after_recv = 0;
                 pfds[0].fd = 5;
+            }
+            // else here and any optimization in next block unnecessary
+            if (sent_after_recv > 20) {
+                time_t ct = time(null);
+                if (ct - next_ping_try > 0) {
+                    next_ping_try = ct + 10;
+                    int snt = send(5, "\000\002\000", 4, MSG_DONTWAIT); // ping
+                    if (snt != 4 || ++sent_after_recv > 20 + 60) {
+                        pfds[0].fd = -1;
+                        close(5);
+                        next_live_try = time(null);
+                    }
+                }
+                goto next2;
             }
             unsigned char i1 = ((unsigned char *)&iaddr.sin_addr.s_addr)[0];
             unsigned char i2 = ((unsigned char *)&iaddr.sin_addr.s_addr)[1];
@@ -289,6 +308,7 @@ static void client(const char * lnk)
                 sbuf[0] = (len + 2) / 256; sbuf[1] = (len + 2) % 256;
                 sbuf[2] = sport / 256; sbuf[3] = sport % 256;
                 /* XXX CHK */ write(5, sbuf, len + 4);
+                sent_after_recv++;
             }
         }
     next2:
@@ -318,7 +338,7 @@ static void client(const char * lnk)
 
 static void server(void)
 {
-    if (! initial_protosync(1, "mxtxdts0", "mxtxdtc0"))
+    if (! initial_protosync(1, "mxtxdts1", "mxtxdtc1"))
         exit(1);
 
     (void)bind_dgram_isock_to_fd_3(40501, 40904);
@@ -335,8 +355,16 @@ static void server(void)
             unsigned char * datap;
             int len;
             while ( (len = lpktread(&pr, &datap)) > 0) {
-                if (len < 3)
-                    die("tunnel data len %d < 3!", len);
+                if (len < 3) {
+                    if (len == 2) { // ping
+                        const unsigned char * pp = _lpktread_peek(&pr, 4);
+                        // collapse consecutive pings into one //
+                        if (!pp || memcmp(pp, "\000\002\000", 4) != 0)
+                            write(1, "\000\002\000", 4); // pong
+                        goto next1;
+                    }
+                    die("tunnel data len %d < 2!", len);
+                }
                 int port = (datap[0] << 8) + datap[1];
                 send_to_iport(IADDR(127,0,0,1), IPORT(port),
                               datap + 2, len - 2);
@@ -351,6 +379,7 @@ static void server(void)
                 exit(7);
             }
         }
+    next1:
         if (pfds[1].revents) {
             char buf[2048];
             struct sockaddr_in iaddr;
