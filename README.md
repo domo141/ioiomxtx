@@ -11,6 +11,25 @@ data through a software tunnel; this tunnel can be created using `ioio.pl`
 to connect one `mxtx` endpoint to another, often utilizing **ssh** on one
 (or both!) endpoints.
 
+In order to use `mxtx` this software needs to be installed on every tunnel
+endpoints.
+
+tl;dr;
+------
+
+```
+$ git pull --rebase --autostash
+$ make install YES=YES
+$ rm -f mxtx-20[12]*.tar.gz
+$ make a
+$ scp mxtx-20[12]*.tar.gz rhost:
+$ ssh rhost 'tar zxf mxtx-20[12]*.tar.gz'
+$ ssh rhost 'cd mxtx-20[12]* && exec make install YES=YES'
+$ ssh rhost 'rm -rf mxtx-20[12]*'
+$ mxtx-apu.sh sshmxtx lnk rhost
+$ : on another terminal :
+$ mxtx-mosh lnk || mxtx-rsh lnk
+```
 
 ioio
 ----
@@ -98,6 +117,15 @@ Typically `ioio.pl` is used to start `mxtx` endpoints (for the time being)...
 completion (otoh, of course, .m&lt;TAB> completes it). It is basically a
 daemon program, launched by user (once) so this feels like a good name for it.
 
+Rest of user-executable programs are installed with `$HOME/bin/.mxtx-` prefix
+and other accombanied files at `$HOME/.local/share/mxtx/`. The command
+`make unin` removes most of the installed files (should remove all in
+`$HOME/bin/` but leaves `$HOME/.local/share/mxtx/` around).
+
+Like mentioned before `mxtx` need to be installed on all endpoints tunnels
+are to be created. `make a` can be used to (git-)archive sources for offline
+copying.
+
 ### naming and tab completion
 
 Naming is hard, and so is tab completion. After trying a few naming options
@@ -119,10 +147,16 @@ This is good for me, but patches welcome on anything better (or bash support).
 
 ### short command introduction
 
+#### mxtx-mosh
+
+'Mobile shell'. Tunnels the UDP traffic between mosh-clients and mosh-servers
+through an mxtx channel. Works pretty much like normal mosh application.
+Requires Mosh to be installed on mxtx endpoints.
+
 #### mxtx-rsh
 
 'Remote' shell. Requests execution of `mxtx-rshd`. Multiplexes stdout, stderr
- and return value. Tracks window size (when with tty) and sends WINCH requests.
+and return value. Tracks window size (when with tty) and sends WINCH requests.
 
 #### mxtx-io
 
