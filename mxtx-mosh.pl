@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 03 Feb 2018 19:31:00 EET too
-# Last modified: Thu 01 Mar 2018 22:33:55 +0200 too
+# Last modified: Sun 04 Mar 2018 19:52:10 +0200 too
 
 use 5.8.1;
 use strict;
@@ -18,12 +18,17 @@ use IO::Socket;
 
 # the first version w/o much options
 
-die "Usage: $0 link\n" unless @ARGV == 1;
+die "Usage: $0 link [command [args]]\n" unless @ARGV;
 
-# document differences to mosh(1) defaults
+# mxtx-mosh(1) differs from mosh(1) when executing mosh-client as:
+# - escape key is set to '~' (works w/ non-us keyboards, and like openssh)
+# - terminal window doesn't get [mosh] prefix
+# - doesn't "init" terminal (--no-init in mosh(1) options)
 
-sub get_dgt_port($) {
+sub get_dgt_port($)
+{
     socket my $s, AF_UNIX, SOCK_DGRAM, 0 or die 'socket: ', $!;
+    # currently only linux abstract socket space -- portability TBD
     my $to = pack('Sxa*', AF_UNIX, "/tmp/user-1000/mxtx-dgt,$_[0]");
     setsockopt $s, SOL_SOCKET, SO_REUSEADDR, 1;
     # autobind (see man 7 unix)
@@ -51,7 +56,6 @@ if ($dgt_port == 0) {
 
 my $term_colors = qx/mosh-client -c/; die unless defined $term_colors;
 chomp $term_colors;
-#print $term_colors, "\n";
 
 # adapted from mosh(1)
 my @lc_opts;
@@ -61,12 +65,11 @@ foreach (qw/LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY
     my $v = $ENV{$_} || next;
     push @lc_opts, '-l', $_ . '=' . $v;
 }
-#print " @lc_opts\n";
 
-# remote from here and down to m/^__E[N]D__/ for local mosh testing...
+my $link = $ARGV[0]; if (@ARGV > 1) { $ARGV[0] = '--'; } else { shift; }
 
-open P, '-|', qw/mxtx-rsh -t/, $ARGV[0],
-  qw/. mosh-server new -c/, $term_colors, qw/-i 127.0.0.1/, @lc_opts
+open P, '-|', qw/mxtx-rsh -t/, $link,
+  qw/. mosh-server new -c/, $term_colors, qw/-i 127.0.0.1/, @lc_opts, @ARGV
   or die $!;
 
 my ($port, $key);
@@ -78,7 +81,6 @@ while (<P>) {
 }
 0 while (sysread (P, $_, 512) > 0); # strace -ff -o x ... told 341 bytes read
 die "No reply from mosh-server (no mosh-server?)\n" unless defined $port;
-#print $port, $key, "\n";
 close P or die $!;
 
 $ENV{ 'MOSH_KEY' } = $key;
@@ -98,25 +100,3 @@ else {
 }
 
 exec qw/mosh-client 127.0.0.1/, $dgt_port;
-
-__END__
-
-open P, '-|', qw/strace -f -o trace-s mosh-server new -c/, $term_colors,
-  qw/-i 127.0.0.1/, @lc_opts;
-my ($port, $key);
-while (<P>) {
-    ($port, $key) = ($1, $2), last if /MOSH CONNECT *(\d+) (\S+)/;
-}
-print $port, $key, "\n";
-#close P or die $!;
-
-$ENV{ 'MOSH_KEY' } = $key;
-#$ENV{ 'MOSH_PREDICTION_DISPLAY' } = $predict;
-$ENV{ 'MOSH_NO_TERM_INIT' } = '1';
-$ENV{ 'MOSH_ESCAPE_KEY' } = '~';
-$ENV{ 'MOSH_TITLE_NOPREFIX' } = 't';
-
-$ENV{ 'MXTX_MOSH_PORT' } = $port;
-$ENV{ 'LD_PRELOAD' } = './ldpreload-moshclienthax.so';
-
-exec qw/strace -o trace-c mosh-client 127.0.0.1/, $port;

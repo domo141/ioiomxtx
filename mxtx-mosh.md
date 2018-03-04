@@ -19,20 +19,20 @@ Normally
 
 - when mosh-server receives datagrams, it uses the source address of those
   datagrams to send replies to. The source address may change -- mosh-server
-  always replies to the address every incoming message is coming from.
+  always replies to the address every received message came from.
 
 
 Through mxtx tunnel
 -------------------
 
-- mxts-mosh(1) perl program sends datagram to `mxtx-dgramtunneld` unix domain
+- mxtx-mosh(1) perl program sends datagram to `mxtx-dgramtunneld` unix domain
   socket to ask which inet udp port is has its communication socket bound. If
   `mxtx-dgramtunneld` (to the particular remote in question) is not running,
   it attempt to start it, and then ask again.
 
 - when `mxtx-dgramtunneld` is started, it connects to the `mxtx` unix domain
   stream socket of the particular remote in question and requests `mxtx` to
-  start `mxtx-dgramtunneld` at the endpoint. Both endpoints send their ident
+  start `mxtx-dgramtunneld` at the endpoint. both endpoints send their ident
   messages through the `mxtx` tunnel and when these messages are accepted,
   local `mxtx-dgramtunneld` forks into background and parent exits with zero
   value.
@@ -45,10 +45,10 @@ Through mxtx tunnel
 
 - mxtx-mosh(1) sets/adds `ldpreload-moshclienthax.so` to `LD_PRELOAD`
   environment variable. ldpreload-moshclienthax.so "wraps" socket(2) system
-  call so that after it has called `socket` it will bind the just-created
+  call so that after it has called `socket()` it will bind(2) the just-created
   socket to ipv4 address `127.0.<hip>.<lop>` -- <hip>.<lop> contains the port
   number mosh-server returned encoded in format that can be decoded by
-  `mxtx-dgramtunneld`. The socket wrapper uses `MXTX_MOSH_PORT` environment
+  `mxtx-dgramtunneld`. the socket wrapper uses `MXTX_MOSH_PORT` environment
   variable to know the remote mosh-server port number.
 
 - mxtx-mosh(1) execve's `mosh-client 127.0.0.1 <dgramtunneld-port>`.
@@ -60,8 +60,9 @@ Through mxtx tunnel
   remote:local ports mapping table to send reply datagram to final
   `mosh-client` udp socket.
 
-See tl;rd; in README.md for quick mxtx-mosh test.
+See tl;dr; in README.md for quick mxtx-mosh test.
 
 To see on more detail how mosh (and mxtx-mosh) executes commands, enter
 
     $ strace -s256 -f -o log -e trace=execve,read mosh rhost
+.

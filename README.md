@@ -14,6 +14,7 @@ to connect one `mxtx` endpoint to another, often utilizing **ssh** on one
 In order to use `mxtx` this software needs to be installed on every tunnel
 endpoints.
 
+
 tl;dr;
 ------
 
@@ -30,6 +31,7 @@ $ mxtx-apu.sh sshmxtx lnk rhost
 $ : on another terminal :
 $ mxtx-mosh lnk || mxtx-rsh lnk
 ```
+
 
 ioio
 ----
@@ -76,6 +78,10 @@ this current host working as intermediate gateway. After ssh negotiation with
 and then connection to *host2* will be initiated. In this case, the order
 of commands could be reversed, as the mxtx server would start the handshake
 the same way...
+
+The above example created mxtx link `0` on client host (`host1`) for other
+mxtx-* commands to use. Running `.mxtx` without parameters will give good
+usage information for other options (better to document there than here).
 
 
 mxtx
