@@ -232,8 +232,12 @@ cmd_exit () # exit all .mxtx processes running on this system (dry-run w/o '!')
 cmd_hints () # hints of some more acute ways to utilize mxtx tools
 {
 	printf '%s\n' '' \
-  " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git clone git@ror:repo" \
-  " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git pull --rebase --autostash" ''
+  "Use mxtx-rsh as proxy:" \
+  " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git clone git@ror:{repo}" \
+  " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git pull --rebase --autostash" '' \
+  "Use mxtx-rsh as replacement for git:" \
+  " GIT_SSH_COMMAND='mxtx-rsh' git push {link}:{repopath} HEAD:new-master" '' \
+
 }
 
 cmd_source () # check source of given '$0' command
