@@ -235,7 +235,7 @@ cmd_hints () # hints of some more acute ways to utilize mxtx tools
   "Use mxtx-rsh as proxy:" \
   " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git clone git@ror:{repo}" \
   " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git pull --rebase --autostash" '' \
-  "Use mxtx-rsh as replacement for git:" \
+  "Use mxtx-rsh as replacement for ssh:" \
   " GIT_SSH_COMMAND='mxtx-rsh' git push {link}:{repopath} HEAD:new-master" '' \
 
 }
