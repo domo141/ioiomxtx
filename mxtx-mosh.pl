@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 03 Feb 2018 19:31:00 EET too
-# Last modified: Sun 04 Mar 2018 19:52:10 +0200 too
+# Last modified: Sat 10 Mar 2018 12:05:59 +0200 too
 
 use 5.8.1;
 use strict;
@@ -69,7 +69,9 @@ foreach (qw/LANG LANGUAGE LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY
 my $link = $ARGV[0]; if (@ARGV > 1) { $ARGV[0] = '--'; } else { shift; }
 
 open P, '-|', qw/mxtx-rsh -t/, $link,
-  qw/. mosh-server new -c/, $term_colors, qw/-i 127.0.0.1/, @lc_opts, @ARGV
+  # MXTX_EXP_ORIG_TERM is experimental, may vanish/change name in future...
+  qw/. env/, "MXTX_EXP_ORIG_TERM=$ENV{TERM}",
+  qw/mosh-server new -c/, $term_colors, qw/-i 127.0.0.1/, @lc_opts, @ARGV
   or die $!;
 
 my ($port, $key);
