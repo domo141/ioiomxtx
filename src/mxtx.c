@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Sat 24 Feb 2018 16:48:27 +0200 too
+ * Last modified: Tue 13 Mar 2018 23:42:28 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -58,9 +58,11 @@
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
 #define _DEFAULT_SOURCE // glibc >= 2.19
 #define _POSIX_C_SOURCE 200112L // for setenv when  glibc < 2.19
 #define _POSIX_SOURCE // for nocldwait when glibc < 2.19
+#endif
 
 #include <unistd.h>
 #include <stdio.h>
@@ -80,6 +82,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <netinet/in.h>
 #include <arpa/inet.h> // for htons/ntohs
 #include <errno.h>
 

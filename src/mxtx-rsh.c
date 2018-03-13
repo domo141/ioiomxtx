@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Sat 24 Feb 2018 16:19:42 +0200 too
+ * Last modified: Tue 13 Mar 2018 23:50:53 +0200 too
  */
 
 #include "more-warnings.h"
@@ -33,8 +33,13 @@
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 #include <signal.h>
+#if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
 #include <pty.h>
+#else
+#include <termios.h>
+#endif
 //#include <.h>
 
 #include "mxtx-lib.h"

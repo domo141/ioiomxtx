@@ -32,13 +32,15 @@
  * Created: Tue 22 Nov 2011 16:55:43 +0200 too
  * For ttt: Fri 03 Oct 2014 19:21:19 +0300 too
  * For mxtx: Sat 26 Aug 2017 21:24:28 +0300 too
- * Last modified: Fri 15 Dec 2017 00:23:08 +0200 too
+ * Last modified: Wed 14 Mar 2018 00:29:47 +0200 too
  */
 
 #define VERDATE "1.1 (2017-08-31)"
 
+#if defined(__linux__) && __linux__
 #define _GNU_SOURCE
 #define _DEFAULT_SOURCE
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,7 +70,17 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#if defined(__linux__) && __linux__
 #include <endian.h> //for older compilers not defining __BYTE_ORDER__ & friends
+#else
+#include <sys/endian.h> //ditto
+#endif
+
+#ifndef __BYTE_ORDER
+#define __BYTE_ORDER _BYTE_ORDER // opportunistic, picked from freebsd
+#define __LITTLE_ENDIAN _LITTLE_ENDIAN
+#define __BIG_ENDIAN _BIG_ENDIAN
+#endif
 
 // gcc -dM -E -x c /dev/null | grep BYTE
 

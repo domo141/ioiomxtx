@@ -24,11 +24,13 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Sat 24 Feb 2018 16:48:27 +0200 too
+ * Last modified: Wed 14 Mar 2018 00:26:15 +0200 too
  */
 
+#if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
 #define _DEFAULT_SOURCE // for newer linux environments
 #define _POSIX_SOURCE // for some older linux environments
+#endif
 
 #include <unistd.h>
 #include <stdio.h>
@@ -42,6 +44,7 @@
 #include <sys/un.h>
 #include <sys/poll.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 
@@ -202,7 +205,16 @@ static void init(int argc, char * argv[])
 #if defined(__linux__) && __linux__
     fill_sockaddr_un(&saddr, "%c/tmp/user-%d/un-s-1080", 0, getuid());
 #else
-#error please add support
+    char * xdgrd = getenv("XDG_RUNTIME_DIR");
+    if (xdgrd)
+        fill_sockaddr_un(&saddr, "%s/un-s-1080", xdgrd);
+    else {
+        uid_t uid = getuid();
+        char dir[64];
+        (void)snprintf(dir, sizeof dir, "/tmp/user-%d", uid);
+        (void)mkdir(dir, 0700);
+        fill_sockaddr_un(&saddr, "/tmp/user-%d/un-s-1080", uid);
+    }
 #endif
     int sd = xbind_listen_unix_socket(&saddr, SOCK_STREAM);
     xmovefd(sd, 3);

@@ -19,7 +19,7 @@
  *          All rights reserved
  *
  * Created: Thu 14 Dec 2017 08:48:34 EET too
- * Last modified: Thu 01 Feb 2018 19:38:11 +0200 too
+ * Last modified: Wed 14 Mar 2018 00:37:52 +0200 too
  */
 
 /* "virtual soft file access" ld_preload library, a hacky module to
@@ -57,7 +57,7 @@
 
 // -Wformat=2 ¡currently! (2017-12) equivalent of the following 4
 #pragma GCC diagnostic error "-Wformat"
-#pragma GCC diagnostic error "-Wformat-nonliteral"
+#pragma GCC diagnostic warning "-Wformat-nonliteral" // XXX ...
 #pragma GCC diagnostic error "-Wformat-security"
 #pragma GCC diagnostic error "-Wformat-y2k"
 
@@ -69,7 +69,9 @@
 #pragma GCC diagnostic error "-Wmissing-include-dirs"
 #pragma GCC diagnostic error "-Wundef"
 #pragma GCC diagnostic error "-Wbad-function-cast"
-#pragma GCC diagnostic error "-Wlogical-op"
+#ifndef __clang__
+#pragma GCC diagnostic error "-Wlogical-op" // XXX ...
+#endif
 #pragma GCC diagnostic error "-Waggregate-return"
 #pragma GCC diagnostic error "-Wold-style-definition"
 #pragma GCC diagnostic error "-Wmissing-prototypes"
@@ -86,10 +88,12 @@
 
 #endif /* defined (__GNUC__) */
 
+#if defined(__linux__) && __linux__
 #define _DEFAULT_SOURCE
 #define _GNU_SOURCE
 
 #define _ATFILE_SOURCE
+#endif
 
 #define open open_hidden
 #define open64 open64_hidden
@@ -285,9 +289,11 @@ static int connect_to_mxtx_with(const char * lnk)
     }
     else {
 	uid_t uid = getuid();
-	(void)snprintf(path, sizeof path, "/tmp/user-%d", uid);
-	(void)mkdir(path, 0700);
-	len = snprintf(path, sizeof path, "/tmp/user-%d/mxtx,%s", uid, lnk);
+	(void)snprintf(addr.sun_path,
+		       sizeof addr.sun_path, "/tmp/user-%d", uid);
+	(void)mkdir(addr.sun_path, 0700);
+	len = snprintf(addr.sun_path,
+		       sizeof addr.sun_path, "/tmp/user-%d/mxtx,%s", uid, lnk);
     }
 #endif
     if ((size_t)len >= sizeof addr.sun_path) {

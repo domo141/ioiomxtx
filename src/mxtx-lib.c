@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 21:06:56 EEST too
- * Last modified: Mon 26 Feb 2018 18:56:02 +0200 too
+ * Last modified: Wed 14 Mar 2018 00:42:31 +0200 too
  */
 
 /* sh mxtx-lib.c will compile single mxtx-lib.o -- good for testing
@@ -229,9 +229,10 @@ struct sockaddr_un * fill_mxtx_socket_path(struct sockaddr_un * uaddr,
         return fill_sockaddr_un(uaddr, "%s/mxtx%s,%s", xdgrd, x, path);
     // else
     uid_t uid = getuid();
-    (void)snprintf(path, sizeof path, "/tmp/user-%d", uid);
-    (void)mkdir(path, 0700);
-    return fill_sockaddr_un("/tmp/user-%d/mxtx%s,%s", uid, x,suffix);
+    char dir[64];
+    (void)snprintf(dir, sizeof dir, "/tmp/user-%d", uid);
+    (void)mkdir(dir, 0700);
+    return fill_sockaddr_un(uaddr, "/tmp/user-%d/mxtx%s,%s", uid, x, path);
 #endif
 }
 
@@ -313,8 +314,8 @@ int xbind_listen_unix_socket(struct sockaddr_un * addr, int type)
 
 #if 0 /*
 #!perl
-#line 317
-#---- 317
+#line 318
+#---- 318
 
 use 5.8.1;
 use strict;

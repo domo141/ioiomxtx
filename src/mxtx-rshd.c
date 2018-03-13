@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Sat 02 Sep 2017 18:42:37 EEST too
- * Last modified: Wed 21 Feb 2018 05:58:08 +0200 too
+ * Last modified: Tue 13 Mar 2018 23:46:37 +0200 too
  */
 
 #include "more-warnings.h"
@@ -34,9 +34,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
+#if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
 #include <pty.h>
 #include <termio.h>
 #include <utmp.h> // login_tty()
+#else
+#include <termios.h> // trial & error on freebsd
+#include <libutil.h>
+#endif
+#include <signal.h>
 //#include <.h>
 #include <poll.h>
 

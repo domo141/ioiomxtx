@@ -19,7 +19,7 @@
  *          All rights reserved
  *
  * Created: Sat 17 Feb 2018 20:28:43 -0800 too
- * Last modified: Sat 17 Feb 2018 23:00:52 +0200 too
+ * Last modified: Wed 14 Mar 2018 00:31:15 +0200 too
  */
 
 /* when creating af_inet sock_dgram socket, bind it to
@@ -65,7 +65,9 @@
 #pragma GCC diagnostic error "-Wmissing-include-dirs"
 #pragma GCC diagnostic error "-Wundef"
 #pragma GCC diagnostic error "-Wbad-function-cast"
-#pragma GCC diagnostic error "-Wlogical-op"
+#ifndef __clang__
+#pragma GCC diagnostic error "-Wlogical-op" // XXX ...
+#endif
 #pragma GCC diagnostic error "-Waggregate-return"
 #pragma GCC diagnostic error "-Wold-style-definition"
 #pragma GCC diagnostic error "-Wmissing-prototypes"
@@ -82,8 +84,10 @@
 
 #endif /* defined (__GNUC__) */
 
+#if defined(__linux__) && __linux__
 #define _DEFAULT_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #define socket socket_hidden
 
@@ -98,9 +102,19 @@
 
 #include <errno.h>
 
+#if defined(__linux__) && __linux__
 #include <endian.h> //for older compilers not defining __BYTE_ORDER__ & friends
+#else
+#include <sys/endian.h> //ditto
+#endif
 
 #undef socket
+
+#ifndef __BYTE_ORDER
+#define __BYTE_ORDER _BYTE_ORDER // opportunistic, picked from freebsd
+#define __LITTLE_ENDIAN _LITTLE_ENDIAN
+#define __BIG_ENDIAN _BIG_ENDIAN
+#endif
 
 // gcc -dM -E -x c /dev/null | grep BYTE
 

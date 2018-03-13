@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Mon 05 Feb 2018 04:49:13 -0800 too
- * Last modified: Thu 01 Mar 2018 20:49:35 +0200 too
+ * Last modified: Wed 14 Mar 2018 00:27:56 +0200 too
  */
 
 // hint: strace -f [-o of] ... and strace -p ... are useful when inspecting...
@@ -39,13 +39,23 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
 #include <endian.h> //for older compilers not defining __BYTE_ORDER__ & friends
+#else
+#include <sys/endian.h> //ditto
+#endif
 
 #include "mxtx-lib.h"
 
 #define null ((void*)0)
 
 #define isizeof (int)sizeof
+
+#ifndef __BYTE_ORDER
+#define __BYTE_ORDER _BYTE_ORDER // opportunistic, picked from freebsd
+#define __LITTLE_ENDIAN _LITTLE_ENDIAN
+#define __BIG_ENDIAN _BIG_ENDIAN
+#endif
 
 // gcc -dM -E -x c /dev/null | grep BYTE
 
@@ -383,7 +393,7 @@ static void server(void)
         if (pfds[1].revents) {
             char buf[2048];
             struct sockaddr_in iaddr;
-            unsigned int addrlen = sizeof iaddr;
+            socklen_t addrlen = sizeof iaddr;
             int l = recvfrom(3, buf + 4, sizeof buf - 4, 0,
                              (struct sockaddr *)&iaddr, &addrlen);
             // XXX check addrlen (here & everywhere ?)

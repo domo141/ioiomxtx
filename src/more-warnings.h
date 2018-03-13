@@ -6,6 +6,7 @@
 
 // (Ø) public domain, like https://creativecommons.org/publicdomain/zero/1.0/
 
+#if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
 // on linux: man feature_test_macros -- try ftm.c at the end of it
 // outcomment on demand...
 #define _DEFAULT_SOURCE 1
@@ -16,6 +17,7 @@
 #define _ATFILE_SOURCE 1
 // more extensions (less portability?)
 //#define _GNU_SOURCE 1
+#endif
 
 // gcc -dM -E -xc /dev/null | grep -i gnuc
 // clang -dM -E -xc /dev/null | grep -i gnuc
@@ -60,7 +62,11 @@
 #pragma GCC diagnostic error "-Wmissing-include-dirs"
 #pragma GCC diagnostic error "-Wundef"
 #pragma GCC diagnostic error "-Wbad-function-cast"
+
+#ifndef __clang__ // XXX revisit -- tried with clang 3.8.0
 #pragma GCC diagnostic error "-Wlogical-op"
+#endif
+
 #pragma GCC diagnostic error "-Waggregate-return"
 #pragma GCC diagnostic error "-Wold-style-definition"
 #pragma GCC diagnostic error "-Wmissing-prototypes"
