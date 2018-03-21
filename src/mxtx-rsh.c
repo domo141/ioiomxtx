@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Tue 13 Mar 2018 23:50:53 +0200 too
+ * Last modified: Wed 21 Mar 2018 19:09:08 +0200 too
  */
 
 #include "more-warnings.h"
@@ -122,6 +122,8 @@ static void opts(int * argcp, char *** argvp) {
             G.tty = 1;
         else if ((*argvp)[0][1] == 'n' && (*argvp)[0][2] == '\0')
             G.nostdin = 1;
+        else if ((*argvp)[0][1] == 'q' && (*argvp)[0][2] == '\0')
+            ; // drop -q (quiet)...
         else if ((*argvp)[0][1] == 'e' && (*argvp)[0][2] == '\0') {
             // drop -e <escape-char> (for now)
             (*argcp)--; (*argvp)++;
