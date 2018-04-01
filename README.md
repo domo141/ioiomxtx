@@ -185,12 +185,14 @@ library is used to make clients able to connect to it. There is an
 `mxtx-apu.sh chromie` command which starts special (incognito)
 chrome/chromium instance which uses this socksproxy for connections.
 
-`mxtx-socksproxy` is installed at `$HOME/.local/share/mxtx/socksproxy`
+`mxtx-socksproxy` is installed as `$HOME/.local/share/mxtx/socksproxy`
 (for now). It takes mxtx *link* names as arguments. When run it reads
 ($HOME/.local/share/mxtx/socksproxy/)`hosts-to-proxy` files on link
-targets to see what hosts are connectable behind every particular link.
-The tool `./addhost.sh` (installed to the same directory) can be used to
-ease adding hosts to the `hosts-to-proxy` file.
+targets to see what hosts are connectable behind every particular link
+('', '/' and '.' resolve to local system -- for those connections that can
+be made directly by socksproxy). The tool `./addhost.sh` (installed to the
+same .local/share/mxtx/ directory) can be used to ease adding hosts to the
+`hosts-to-proxy` file.
 
 #### mxtx-apu.sh
 

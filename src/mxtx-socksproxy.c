@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Wed 14 Mar 2018 00:26:15 +0200 too
+ * Last modified: Sun 01 Apr 2018 19:47:31 +0300 too
  */
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
@@ -46,6 +46,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <setjmp.h>
 #include <errno.h>
 
 // for xinet_connect()
@@ -69,8 +70,10 @@ const char * _prg_ident = "mxtx-socksproxy: ";
 
 static struct {
     char * network;
-    char pidbuf[16]; // 64-bit aligned...
+    char pidbuf[16];
+    pid_t ppid; // -Wpadded
     struct timeval stv;
+    sigjmp_buf restart_env;
 } G;
 
 #define LINEREAD_DATA_BUFFER_SIZE 4096
@@ -123,7 +126,8 @@ static void init(int argc, char * argv[])
             break;
         }
         int sd;
-        if (argv[i][0] == '\0' || (argv[i][0] == '/' && argv[i][1] == '\0')) {
+        if (argv[i][0] == '\0' || (argv[i][1] == '\0' &&
+                                   (argv[i][0] == '/' || argv[i][0] == '.'))) {
             const char * home = getenv("HOME");
             if (home == null) continue; // unlikely
             char fn[4096];
@@ -220,16 +224,34 @@ static void init(int argc, char * argv[])
     xmovefd(sd, 3);
 }
 
+static void restart_sighandler(int sig)
+{
+    (void)sig;
+    if (getpid() != G.ppid) return;
+    close(3);
+    warn("Restarting...");
+    siglongjmp(G.restart_env, 1);
+    die("not reached");
+}
+
 // echo 50 | tr 50 '\005\000' | nc -l 1080 | od -tx1
 
 static void start(void);
 static void io(int ifd, int ofd);
 
+extern char ** environ;
 int main(int argc, char * argv[])
 {
     seterr_linebuf();
     init(argc, argv);
     sigact(SIGCHLD, SIG_IGN, SA_NOCLDWAIT);
+
+    G.ppid = getpid();
+    if (sigsetjmp(G.restart_env, 1)) {
+        execve(argv[0], argv, environ);
+        die("not reached");
+    }
+    sigact(SIGUSR1, restart_sighandler, 0);
 
     while (1) {
         int sd = accept(3, null, 0);
