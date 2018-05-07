@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Tue 13 Mar 2018 23:42:28 +0200 too
+ * Last modified: Mon 07 May 2018 22:35:22 +0300 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -262,7 +262,9 @@ static void vout(int fd, const char * format, va_list ap)
 
 #define tdbg(format, ...) warn(XSTR(__LINE__) ": " format, __VA_ARGS__)
 
-static void ATTRIBUTE ((format (printf, 1, 2)))
+// non-static so library functions use these
+void ATTRIBUTE ((format (printf, 1, 2)))
+warn(const char * format, ...); void
 warn(const char * format, ...)
 {
     va_list ap;
@@ -272,7 +274,9 @@ warn(const char * format, ...)
     va_end(ap);
 }
 
-static void ATTRIBUTE ((format (printf, 1, 2))) ATTRIBUTE ((noreturn))
+// non-static so library functions use these
+void ATTRIBUTE ((format (printf, 1, 2))) ATTRIBUTE ((noreturn))
+die(const char * format, ...); void
 die(const char * format, ...)
 {
     va_list ap;
