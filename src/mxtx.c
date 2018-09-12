@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Mon 07 May 2018 22:35:22 +0300 too
+ * Last modified: Wed 12 Sep 2018 21:33:58 +0300 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -365,6 +365,7 @@ static bool to_socket(int sd, void * data, size_t datalen)
     }
     char * buf = (char *)data;
     int tries = 1;
+    ssize_t dlen = (ssize_t)datalen;
     do {
 	// here if socket buffer full (typically 100kb of data unread)
 	// give peer 1/10 of a second to read it and retry.
@@ -376,9 +377,9 @@ static bool to_socket(int sd, void * data, size_t datalen)
 	    wlen = 0;
 
 	buf += wlen;
-	datalen -= wlen;
+	dlen -= wlen;
 
-	wlen = write(sd, buf, datalen);
+	wlen = write(sd, buf, dlen);
 #if EAGAIN != EWOULDBLOCK
 	if (errno != EAGAIN && errno != EWOULDBLOCK) {
 #else
@@ -390,8 +391,9 @@ static bool to_socket(int sd, void * data, size_t datalen)
 #if 0
 	}
 #endif
-	if (wlen == (ssize_t)datalen) {
-	    log2("Writing data to %d took %d tries", sd, tries);
+	if (wlen == dlen) {
+	    log2("Writing %lu bytes of data to %d took %d tries",
+		 datalen, sd, tries);
 	    return true;
 	}
 	log4("%d: wlen %d (of %u):", sd, (int)wlen, (unsigned int)datalen);
