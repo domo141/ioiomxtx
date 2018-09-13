@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Wed 12 Sep 2018 21:33:58 +0300 too
+ * Last modified: Tue 13 Sep 2018 22:22:27 +0300 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -99,6 +99,8 @@
 
 // explicit flags to debug mxtx.c implementation problems...
 #define DEBUG_CMD_STRING 0
+
+#define BUFFER_SIZE 16384
 
 // for some reason without this linking fails even
 // libmxtx.a vwarn() should not be referenced
@@ -447,7 +449,7 @@ static int from_iopipe(int fd, uint8_t * chnl, uint8_t * cntr, char * data)
     *chnl = ((unsigned char *)hdr)[0];
     *cntr = ((unsigned char *)hdr)[1];
     int len = ntohs(hdr[1]);
-    if (len > 16384)
+    if (len > BUFFER_SIZE)
 	die("Protocol error: mx input message: chnl %d:%d len %d too long\n",
 	    *chnl, *cntr, len);
 
@@ -492,7 +494,7 @@ static void close_socket_and_remap(int sd)
 
 static int from_socket_to_iopipe(int pfdi, int iofd)
 {
-    char buf[16384];
+    char buf[BUFFER_SIZE];
     int fd = G.pfds[pfdi].fd;
     int len = read(fd, buf, sizeof buf);
 
@@ -536,7 +538,7 @@ static void unlink_socket_file_atexit(void)
 
 static int send_new_conn_cmd_to_iopipe(int iofd, int chnl)
 {
-    char buf[16384 - 128];
+    char buf[BUFFER_SIZE - 128];
     int rv;
     alarm(2);
     rv = readfully(chnl, buf, 4);
@@ -581,7 +583,7 @@ static int send_new_conn_cmd_to_iopipe(int iofd, int chnl)
 
 static void client_handle_server_message(void)
 {
-    char buf[16384];
+    char buf[BUFFER_SIZE];
     unsigned char chnl, cntr;
 
     int len = from_iopipe(0, &chnl, &cntr, buf);
@@ -847,7 +849,7 @@ static int server_execute_command_buf(char * buf, int len)
 
 static void server_handle_client_message(void)
 {
-    char buf[16384];
+    char buf[BUFFER_SIZE];
     unsigned char chnl, cntr;
 
     int len = from_iopipe(0, &chnl, &cntr, buf);
