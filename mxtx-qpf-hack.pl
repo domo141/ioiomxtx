@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Fri 06 Apr 2018 18:36:35 EEST too
-# Last modified: Wed 22 Aug 2018 20:36:56 +0300 too
+# Last modified: Thu 20 Sep 2018 20:01:44 +0300 too
 
 # mxtx quick port forward hack
 #
@@ -35,6 +35,8 @@ my $lsock = IO::Socket::INET->new(Listen => 1,
 	  or die "bind 127.1:$ARGV[0]: $!\n";
 
 $lsock->listen(1) or die "listen: $!\n";
+
+$SIG{CHLD} = 'IGNORE';
 
 while (my $asock = $lsock->accept()) {
 	if (fork) {
