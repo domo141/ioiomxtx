@@ -118,6 +118,12 @@ cmd_sshmxtx () # create default forward tunnel using ssh (link '0:')
 
 cmd_chromie () # start chromium / chrome browser w/ mxtx socks5 tunneling
 {
+	case ${1-} in h) ic=--incognito
+		   ;; v) ic=
+		   ;; *) usage "('h'|'v') [link|url] ..." \
+			"'h' -- incognito" "'v' -- not"
+	esac
+	shift
 	set_chromie
 	ldpra=$mxtxdir/ldpreload-i2uconnect5.so
 	test -f "$ldpra" || die "'$ldpra' does not exist"
@@ -129,7 +135,7 @@ cmd_chromie () # start chromium / chrome browser w/ mxtx socks5 tunneling
 	export LD_PRELOAD
 	x_exec "$chromie" --user-data-dir=$HOME/.config/$cbcnfdir \
 			--host-resolver-rules='MAP * 0.0.0.0 , EXCLUDE 127.1' \
-			--incognito --proxy-server=socks5://127.1:1080 "$@"
+			$ic --proxy-server=socks5://127.1:1080 "$@"
 }
 
 find_sftp_server () {
