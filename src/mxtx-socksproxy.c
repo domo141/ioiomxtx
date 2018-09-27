@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Sun 01 Apr 2018 19:47:31 +0300 too
+ * Last modified: Thu 27 Sep 2018 21:17:56 +0300 too
  */
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
@@ -234,6 +234,16 @@ static void restart_sighandler(int sig)
     die("not reached");
 }
 
+static void childsexit_sighandler(int sig)
+{
+    (void)sig;
+    pid_t pid = getpid();
+    if (pid == G.ppid) return;
+    warn("Process %d exiting", pid);
+    exit(0);
+}
+
+
 // echo 50 | tr 50 '\005\000' | nc -l 1080 | od -tx1
 
 static void start(void);
@@ -252,9 +262,12 @@ int main(int argc, char * argv[])
         die("not reached");
     }
     sigact(SIGUSR1, restart_sighandler, 0);
+    sigact(SIGUSR2, childsexit_sighandler, 0);
 
     while (1) {
         int sd = accept(3, null, 0);
+        if (sd < 0 && errno == EINTR)
+            continue;
         if (! checkpeerid(sd)) {
             close(sd);
             continue;
