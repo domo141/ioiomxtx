@@ -116,6 +116,15 @@ cmd_sshmxtx () # create default forward tunnel using ssh (link '0:')
 	x_exec ioio.pl / .mxtx -c"$link" / ssh "$remote" env $* .mxtx -s
 }
 
+set_i2u_ldpra ()
+{
+	ldpra=$mxtxdir/ldpreload-i2uconnect5.so
+	test -f "$ldpra" || die "'$ldpra' does not exist"
+	export "LD_PRELOAD=$ldpra${LD_PRELOAD:+:$LD_PRELOAD}"
+	export LD_PRELOAD
+
+}
+
 cmd_chromie () # start chromium / chrome browser w/ mxtx socks5 tunneling
 {
 	case ${1-} in h) ic=--incognito
@@ -125,17 +134,43 @@ cmd_chromie () # start chromium / chrome browser w/ mxtx socks5 tunneling
 	esac
 	shift
 	set_chromie
-	ldpra=$mxtxdir/ldpreload-i2uconnect5.so
-	test -f "$ldpra" || die "'$ldpra' does not exist"
+
 	# shortcut to http://index-{link}.html (when $1 ~ /^[a-z0-9]{1,3}$/)
 	case ${1-} in [a-z0-9] | [a-z0-9][a-z0-9] | [a-z0-9][a-z0-9][a-z0-9] )
 		l=$1; shift; set -- http://index-$l.html "$@"
 	esac
-	export "LD_PRELOAD=$ldpra${LD_PRELOAD:+:$LD_PRELOAD}"
-	export LD_PRELOAD
+	set_i2u_ldpra
 	x_exec "$chromie" --user-data-dir=$HOME/.config/$cbcnfdir \
 			--host-resolver-rules='MAP * 0.0.0.0 , EXCLUDE 127.1' \
 			$ic --proxy-server=socks5://127.1:1080 "$@"
+}
+
+cmd_ffox () # start firefox browser w/ mxtx socks5 tunneling
+{
+	case ${1-} in h) prv=--private
+		   ;; v) prv=
+		   ;; *) usage "('h'|'v') [link|url] ..." \
+			"'h' -- private" "'v' -- not"
+	esac
+	shift
+	case $HOME in *["$IFS"]*) die "Whitespace in '$HOME'"; esac
+	profile_name=ff-mxtx
+	profile_dir=$HOME/.config/$profile_name
+
+	# shortcut to http://index-{link}.html (when $1 ~ /^[a-z0-9]{1,3}$/)
+	case ${1-} in [a-z0-9] | [a-z0-9][a-z0-9] | [a-z0-9][a-z0-9][a-z0-9] )
+		l=$1; shift; set -- http://index-$l.html "$@"
+	esac
+	set_i2u_ldpra
+	test -d $profile_dir || {
+		firefox -CreateProfile "$profile_name $profile_dir" -no-remote
+		printf %s\\n > $profile_dir/user.js \
+			'user_pref("network.proxy.socks", "127.0.0.1");' \
+			'user_pref("network.proxy.socks_port", 1080);' \
+			'user_pref("network.proxy.socks_remote_dns", true);' \
+			'user_pref("network.proxy.type", 1);'
+	}
+	x_exec firefox -profile $profile_dir $prv -no-remote "$@" &
 }
 
 find_sftp_server () {
