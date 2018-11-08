@@ -103,7 +103,7 @@ cmd_path () # show file/dir paths -- most useful in mxtx-rsh shell
 	echo
 }
 
-cmd_sshmxtx () # create default forward tunnel using ssh (link '0:')
+cmd_sshmxtx () # create default forward tunnel using ssh
 {
 	test $# -ge 2 || usage 'link [user@]host [env=val [env...]' \
 			"'env's, if any, will be set in host"
@@ -229,6 +229,21 @@ cmd_sftp () # like sftp, but via mxtx tunnel
 {
 	MXTX_APU_WRAPPER=sftp x_exec sftp -S "$0" "$@"
 }
+
+cmd_tcp1271c () # tunnel localhost connection to mxtx endpoint
+{
+	test $# -gt 1 || usage 'mapping command [args]' \
+		'mapping format: port/dest[/dport][:port/dest[/dport][:...]]' \
+		'example: mxtx-apu.sh tcp1271c 5901/w/5900 vncwiever :1'
+
+	so=$HOME/.local/share/mxtx/ldpreload-tcp1271conn.so
+	export LD_PRELOAD=$so${LD_PRELOAD:+:$LD_PRELOAD}
+	export TCP1271_MAP=$1
+	shift
+	exec "$@"
+	exit not reached
+}
+
 
 cmd_emacs () # emacs, with loaded mxtx.el -- a bit faster if first arg is '!'
 {

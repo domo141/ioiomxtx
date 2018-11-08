@@ -7,13 +7,13 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Tue 27 Feb 2018 20:55:29 +0200 too
+# Last modified: Thu 08 Nov 2018 22:29:21 +0200 too
 
 SHELL = /bin/sh
 
 BIN := mxtx mxtx-io mxtx-rshd mxtx-rsh mxtx-socksproxy mxtx-dgramtunneld
 BIN += ldpreload-i2ubind.so ldpreload-i2uconnect5.so
-BIN += ldpreload-vsfa.so ldpreload-moshclienthax.so
+BIN += ldpreload-vsfa.so ldpreload-moshclienthax.so ldpreload-tcp1271conn.so
 
 # Note: all source file dependencies may not be listed (usually not a problem)
 #       do `make clean all` at the end of development session...
@@ -94,6 +94,7 @@ install.sh:
 	xcp ldpreload-i2uconnect5.so to $HOME/.local/share/mxtx/
 	xcp ldpreload-vsfa.so to $HOME/.local/share/mxtx/
 	xcp ldpreload-moshclienthax.so to $HOME/.local/share/mxtx/
+	xcp ldpreload-tcp1271conn.so to $HOME/.local/share/mxtx/
 	echo
 	$yesyes || {
 		echo Enter '' make install YES=YES '' to do so.
