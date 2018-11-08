@@ -8,16 +8,16 @@
 #           All rights reserved
 #
 # Created: Sun 12 Nov 2017 17:34:40 EET too
-# Last modified: Sat 10 Mar 2018 12:31:16 +0200 too
+# Last modified: Thu 08 Nov 2018 22:44:31 +0200 too
 
 case ${BASH_VERSION-} in *.*) set -o posix; shopt -s xpg_echo; esac
 case ${ZSH_VERSION-} in *.*) emulate ksh; esac
 
 set -euf
 
-version_num=2.0
+version_num=2.1
 
-prev_commit=b2b47c5c0650cc25fab45df87b2471861000d1c3
+prev_commit=15f7489086b4d639618f87e49d658e3ad3fabd3d
 
 LANG=C LC_ALL=C export LANG LC_ALL; unset LANGUAGE
 
