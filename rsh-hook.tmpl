@@ -13,6 +13,11 @@ set -euf
 
 test $# = 1 || exit
 
+#dark=false
+dark=true
+
+test $dark && dl=d || dl=l
+
 _set_colors () {
         printf '\033]4;%d;#%s%s%s\007' 0 $1 $1 $1
         printf '\033]4;%d;#%s%s%s\007' 1 $2 $1 $1
@@ -49,17 +54,21 @@ colorset () {
 
 test "$MXTX_RSH_ENTRY" || {
         # exit: restore color (or set to something distinguishable)
-        colorset black gray90 dark u
+        test $dark \
+        && colorset wheat black  light \
+        || colorset black gray90 dark u
         exit
 }
 
 # entry: set colors based on link
 
-case $1 in 0) colorset lightred  black       light
-        ;; 1) colorset black     orchid      light
-        ;; 2) colorset black     slategray3  light
-        ;; a) colorset black    '#aa99bb'    light
-        ;; d) colorset black     thistle     dark u
-        ;; z) colorset black     gainsboro   dark u
-        ;; w) colorset '#80c0ff' black       light
+case $1$dl in 0[dl]) colorset lightred   black       light
+           ;; 1[dl]) colorset black      orchid      light
+           ;; 2[dl]) colorset black      slategray3  light
+           ;; al)    colorset black     '#ccbbdd'    dark u
+           ;; ad)    colorset white     '#223344'    light
+           ;; dl)    colorset black      thistle     dark u
+           ;; dd)    colorset white     '#482f48'    light
+           ;; z[dl]) colorset black      gainsboro   dark u
+           ;; w[dl]) colorset '#80c0ff' '#111111'    light
 esac
