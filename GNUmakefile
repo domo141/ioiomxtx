@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Thu 08 Nov 2018 22:29:21 +0200 too
+# Last modified: Sat 05 Jan 2019 15:28:39 +0200 too
 
 SHELL = /bin/sh
 
@@ -128,8 +128,8 @@ git-head.sh:
 #	#eos
 	exit 1 # not reached
 
-.PHONY: a
-a:	#git-head
+.PHONY: dist
+dist:	#git-head
 	@test -z "`exec git status --porcelain -uno`" || \
 		echo Note: not taking changes from \'dirty\' working tree!
 	@set -euf; set x `exec git log -1 --pretty='%h %ci'`; s=$$3-g$$2; \
@@ -145,7 +145,7 @@ remote-update.sh:
 	die () { printf %s\\n "$*" >&2; exit 1; }
 	set -euf
 	export LC_ALL=C LANG=C
-	test -n "$2" || die Usage':' $1 install D=dest
+	test -n "$2" || die Usage':' $1 remote-update D=dest
 	make=$1 D=$2
 	set x `exec git log -1 --pretty='%h %ci'`; s=$3-g$2;
 	die () { exit 1; }

@@ -22,7 +22,7 @@ tl;dr;
 $ git pull --rebase --autostash
 $ make install YES=YES
 $ rm -f mxtx-20[12]*.tar.gz
-$ make a
+$ make dist
 $ scp mxtx-20[12]*.tar.gz rhost:
 $ ssh rhost 'tar zxf mxtx-20[12]*.tar.gz'
 $ ssh rhost 'cd mxtx-20[12]* && exec make install YES=YES'
@@ -129,8 +129,8 @@ and other accombanied files at `$HOME/.local/share/mxtx/`. The command
 `$HOME/bin/` but leaves `$HOME/.local/share/mxtx/` around).
 
 Like mentioned before `mxtx` need to be installed on all endpoints tunnels
-are to be created. `make a` can be used to (git-)archive sources for offline
-copying.
+are to be created. `make dist` can be used to (git-)archive sources for
+bootstrap copying.
 
 ### naming and tab completion
 
@@ -181,9 +181,12 @@ shell redirections to copy a file.
 
 Special utility to tunnel traffic to designated destinations after socks5
 communication is completed. Binds to unix domain socket so an *ldpreload*
-library is used to make clients able to connect to it. There is an
-`mxtx-apu.sh chromie` command which starts special (incognito)
-chrome/chromium instance which uses this socksproxy for connections.
+library is used to make clients able to connect to it. There are commands
+`mxtx-apu.sh chromie` and `mxtx-apu.sh ffox` which start special (incognito)
+chrome/chromium and firefox (respectively) instance which uses this
+socksproxy for connections.
+(Note: in case of chromie, one can add `--proxy-bypass-list` command line
+option to silence attempt to access some sites.)
 
 `mxtx-socksproxy` is installed as `$HOME/.local/share/mxtx/socksproxy`
 (for now). It takes mxtx *link* names as arguments. When run it reads
