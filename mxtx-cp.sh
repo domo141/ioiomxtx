@@ -8,7 +8,7 @@
 #           All rights reserved
 #
 # Created: Tue 24 Oct 2017 19:45:43 EEST too
-# Last modified: Sun 12 Nov 2017 23:04:14 +0200 too
+# Last modified: Sat 16 Mar 2019 15:25:31 +0200 too
 
 case ~ in '~') echo "'~' does not expand. old /bin/sh?" >&2; exit 1; esac
 
@@ -49,6 +49,7 @@ then set_nap0; printf >&2 %s\\n ''\
   "   use '-x' to restrict source (per entry) to one file system"\
   "   use '/' or '/.' at the end of source directory to shorten target path"\
   "   option '-C' (with -a/-r) is useful to filter out many vcs related files"\
+  "   add extra quotes when spaces in filenames, like 'path/to/\"file name\"'"\
   "   use rsync -e mxtx-io ... for 'raw' rsync interface" ''
   exit
 fi
