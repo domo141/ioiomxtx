@@ -7,7 +7,7 @@
 # This file has been put into the public domain.
 #
 # Created: Tue 05 Sep 2017 22:44:11 EEST too
-# Last modified: Thu 07 Sep 2017 07:43:24 +0300 too
+# Last modified: Fri 05 Apr 2019 22:17:39 +0300 too
 
 # move current graphical terminal window to a position and open
 # two more terminal windows below that. copy and add features.
@@ -21,6 +21,9 @@ set -euf
 decor_height=20
 font_height=15
 rows=20
+
+xpos=77
+ypos=20
 
 distance=$(( decor_height + rows * font_height ))
 
@@ -54,11 +57,11 @@ else
         die 'No known graphical environment (add yours ?)'
 fi
 
-printf "\033[8;$rows;80t" # resize to 80x$rows
-printf '\033[3;77;20t' # move to position 77x20
+printf "\033[8;$rows;80"t # resize to 80x$rows
+printf "\033[3;$xpos;$ypos"t # move to position ${xpos}x${ypos}
 
-newterm 77 $(( 20 + distance ))
-newterm 77 $(( 20 + distance * 2 ))
+newterm $xpos $(( ypos + distance ))
+newterm $xpos $(( ypos + distance * 2 ))
 
 # Local variables:
 # mode: shell-script
