@@ -3,6 +3,7 @@
 /ldpreload-i2uconnect5.so
 /ldpreload-vsfa.so
 /ldpreload-moshclienthax.so
+/ldpreload-tcp1271conn.so
 /libmxtx.a
 /mxtx
 /mxtx-io

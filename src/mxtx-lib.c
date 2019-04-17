@@ -22,7 +22,7 @@
  *          All rights reserved
  *
  * Created: Wed 16 Aug 2017 21:06:56 EEST too
- * Last modified: Tue 22 May 2018 20:49:20 +0300 too
+ * Last modified: Sun 11 Nov 2018 23:31:01 +0200 too
  */
 
 /* sh mxtx-lib.c will compile single mxtx-lib.o -- good for testing
@@ -157,7 +157,7 @@ void xwritefully(int fd, const void * buf, ssize_t len)
             if (l == 0) { sleep(1); continue; }
             if (errno == EAGAIN) { sleep(1); continue; }
             if (errno == EINTR) continue;
-            die("write(%d, ..., %d) failed:", fd, len);
+            die("write(%d, ..., %zd) failed:", fd, len);
         }
         buf = (const char *)buf + l;
         len -= l;

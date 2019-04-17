@@ -8,7 +8,7 @@
 #           All rights reserved
 #
 # Created: Thu 24 Aug 2017 22:13:39 EEST too
-# Last modified: Sun 29 Oct 2017 15:56:07 +0200 too
+# Last modified: Mon 08 Apr 2019 20:03:21 +0300 too
 
 case ${BASH_VERSION-} in *.*) set -o posix; shopt -s xpg_echo; esac
 case ${ZSH_VERSION-} in *.*) emulate ksh; esac
@@ -33,6 +33,7 @@ host=`host -t A "$1" | sed "s/.* \($am\.$am\.$am\.$am\).*/\1/;tx;d;:x;q"`
 test "$host" || die "Could not figure address to host '$1'"
 echo "$1 $host" >> hosts-to-proxy
 echo "Added  $1 $host  to hosts-to-proxy"
+echo : Hint'; ' pkill -USR1 socksproxy
 
 # Local variables:
 # mode: shell-script
