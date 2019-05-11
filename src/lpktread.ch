@@ -8,7 +8,7 @@
  * Modified: Sat Jun 20 17:35:18 1998 too
  * Netpkt version: Sat Aug 25 13:33:30 EEST 2007 too
  * Here: Mon 28 Aug 2017 22:11:12 +0300 too
- * Last modified: Thu 01 Mar 2018 19:53:13 +0200 too
+ * Last modified: Sat 11 May 2019 11:45:39 +0300 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"): */
@@ -21,9 +21,17 @@
 #include <stdbool.h>
 #include <errno.h>
 
-#ifndef MW_FALLTHROUGH
-#define MW_FALLTHROUGH do {} while (0)
-#endif
+#ifndef FALL_THROUGH
+#if __GNUC__ >= 7
+// gcc manual says all kind of /* fall.*through */ regexp's work too
+// but perhaps only when cpp does not filter comments out. thus...
+#define FALL_THROUGH __attribute__ ((fallthrough))
+#else
+#define FALL_THROUGH ((void)0)
+
+#endif /* __GNUC__ >= 7 */
+#endif /* FALL_THROUGH */
+
 
 #define char unsigned char
 struct lpktread
@@ -92,7 +100,7 @@ static int lpktread(LPktRead * pr, char ** datap)
 		pr->selected = true;
 		return 0;
 	    }
-	    MW_FALLTHROUGH;
+	    FALL_THROUGH;
 
 	case STATE_LEN2:
 	    pr->len |= *pr->currp++;
@@ -118,7 +126,7 @@ static int lpktread(LPktRead * pr, char ** datap)
 	    pr->startp = pr->currp;
 	    pr->state = STATE_LENCHECK;
 
-	    MW_FALLTHROUGH;
+	    FALL_THROUGH;
 
 	case STATE_LENCHECK:
 #if 0

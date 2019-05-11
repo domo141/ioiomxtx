@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Thu 27 Sep 2018 21:17:56 +0300 too
+ * Last modified: Sat 11 May 2019 11:48:51 +0300 too
  */
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
@@ -71,7 +71,7 @@ const char * _prg_ident = "mxtx-socksproxy: ";
 static struct {
     char * network;
     char pidbuf[16];
-    pid_t ppid; // -Wpadded
+    pid_t ppid; // note: known -Wpadded warning... //
     struct timeval stv;
     sigjmp_buf restart_env;
 } G;

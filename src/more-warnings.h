@@ -13,7 +13,7 @@
 // for older glibc's on linux (< 2.19 -- e.g. rhel7 uses 2.17...)
 #define _BSD_SOURCE 1
 #define _SVID_SOURCE 1
-#define _POSIX_C_SOURCE 299809L
+#define _POSIX_C_SOURCE 200809L
 #define _ATFILE_SOURCE 1
 // more extensions (less portability?)
 //#define _GNU_SOURCE 1
@@ -25,7 +25,7 @@
 
 #if 0 // change to '#if 1' whenever there is desire to see these...
 #pragma GCC diagnostic warning "-Wpadded"
-#pragma GCC diagnostic warning "-Wpedantic"
+#pragma GCC diagnostic warning "-Wpedantic" // gcc 4.4.6 does not know this
 #endif
 
 // to relax, change 'error' to 'warning' -- or even 'ignored'
@@ -37,11 +37,11 @@
 
 #if __GNUC__ >= 7
 
-#pragma GCC diagnostic error "-Wimplicit-fallthrough" // in -Wextra already ???
-
-#define MW_FALLTHROUGH __attribute__ ((fallthrough))
+// gcc manual says all kind of /* fall.*through */ regexp's work too
+// but perhaps only when cpp does not filter comments out. thus...
+#define FALL_THROUGH __attribute__ ((fallthrough))
 #else
-#define MW_FALLTHROUGH do {} while(0)
+#define FALL_THROUGH ((void)0)
 
 #endif /* __GNUC__ >= 7 */
 
