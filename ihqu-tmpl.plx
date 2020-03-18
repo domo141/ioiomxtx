@@ -5,9 +5,12 @@
   perhaps edit this part before ...<body>, and then do $ perl -x index.html
 -->
 <style type="text/css">
-body { background-color: #aaa; }
+body { background-color: #000; }
 ul,li { margin-left: 0.5em; padding: 0; }
+table { border-spacing: 30px 5px; }
 td { font-size: 400%; }
+a:link { color: #88f; }
+a:visited { color: #88a; }
 </style>
 </head><body>
 <table><tr>
@@ -37,11 +40,11 @@ print O "<table><tr>\n";
 sub row($_) {
     foreach (split /\n/, $_[0]) {
 	/^\s*(\S+)\s+(\S.*)/ or next;
-	print O qq'<td><a href="$1" target=_blank>$2</a> &nbsp;</td>\n';
+	print O qq'<td><a href="$1" target=_blank>$2</a></td>\n';
     }
 }
 row (shift @rows);
-foreach (@rows) { print O "</tr></table>&nbsp;<table><tr>\n"; row $_; }
+foreach (@rows) { print O "</tr></table><table><tr>\n"; row $_; }
 
 print O "</tr></table>\n", '<!', "--\n>\n#!perl\n", @tail, $rest;
 close O;
