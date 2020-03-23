@@ -8,7 +8,7 @@
 #           All rights reserved
 #
 # Created: Tue 24 Oct 2017 19:45:43 EEST too
-# Last modified: Sat 16 Mar 2019 15:25:31 +0200 too
+# Last modified: Mon 23 Mar 2020 19:30:23 +0200 too
 
 case ~ in '~') echo "'~' does not expand. old /bin/sh?" >&2; exit 1; esac
 
@@ -38,7 +38,7 @@ set_nap0 () # not absolute path $0 (best effort heuristics)
 if test $# = 0
 then set_nap0; printf >&2 %s\\n ''\
   "Usage: $nap0 [options] [link:]src... [link:]dest" ''\
-  '  -[arpcsrtunxzCSH]: as in rsync(1)'\
+  '  -[arpcsrtunxzCSHL]: as in rsync(1)'\
   "  -v's and -q's: one -v (with --progress) is default"\
   '  --exclude=, --rsync-path=, --max-size=, --min-size=, --partial,'\
   '         --existing, --ignore-existing and '\'--\'': as in rsync(1)'\
@@ -60,7 +60,7 @@ addsopt () { case $sopts in *$1*) ;; *) sopts=$sopts$1 ;; esac; }
 addlopt () { case $lopts in *$1*) ;; *) lopts=$lopts\ $1${2+=$2} ;; esac; }
 
 q=0 excl= rspath= tar=false
-while getopts ':arpcsrtunzCSHxqv' opt
+while getopts ':arpcsrtunzCSHLxqv' opt
 do case $opt
    in '?')
 	test "$OPTARG" = - || die "'-$OPTARG': unknown short option"
@@ -81,7 +81,7 @@ do case $opt
 	;; --) break
 	;; *) die "'$1': unknown long option"
 	esac
-   ;; a|r|p|c|s|r|t|u|n|z|C|S|H) addsopt $opt
+   ;; a|r|p|c|s|r|t|u|n|z|C|S|H|L) addsopt $opt
    ;; x) sopts=$sopts$opt
    ;; q) q=$((q + 1))
    ;; v) q=$((q - 1))
