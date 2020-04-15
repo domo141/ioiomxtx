@@ -8,7 +8,7 @@
 #           All rights reserved
 #
 # Created: Tue 24 Oct 2017 19:45:43 EEST too
-# Last modified: Mon 23 Mar 2020 19:30:23 +0200 too
+# Last modified: Wed 15 Apr 2020 21:46:41 +0300 too
 
 case ~ in '~') echo "'~' does not expand. old /bin/sh?" >&2; exit 1; esac
 
@@ -40,13 +40,14 @@ then set_nap0; printf >&2 %s\\n ''\
   "Usage: $nap0 [options] [link:]src... [link:]dest" ''\
   '  -[arpcsrtunxzCSHL]: as in rsync(1)'\
   "  -v's and -q's: one -v (with --progress) is default"\
-  '  --exclude=, --rsync-path=, --max-size=, --min-size=, --partial,'\
+  '  --exclude=, --rsync-path=, --max-size=, --min-size=, --inplace,'\
   '         --existing, --ignore-existing and '\'--\'': as in rsync(1)'\
   '  --tar: use tar instead or rsync (workaround where rsync not available)'\
   '' hints: \
   "   read rsync(1) manual page for all these options (and caveats)"\
   "   use '-H' (with -a) to copy hardlinks (default is to copy file contents)"\
   "   use '-x' to restrict source (per entry) to one file system"\
+  "   use '--inplace' (and retries) if copying does not complete in one go"\
   "   use '/' or '/.' at the end of source directory to shorten target path"\
   "   option '-C' (with -a/-r) is useful to filter out many vcs related files"\
   "   add extra quotes when spaces in filenames, like 'path/to/\"file name\"'"\
@@ -75,7 +76,7 @@ do case $opt
 	;; --max-size|-min-size) addlopt $1 $2; OPTIND=3
 	;; --max-size=*|-min-size=*) addlopt ${1%%=*} ${1#*=}
 	;; --existing | --ignore-existing) addlopt $1
-	;; --partial) addlopt $1
+	;; --partial | --inplace) addlopt $1  # partial kept for backw. compat.
 	;; --one-file-system) addsopt x
 	;; --dry-run) addsopt n
 	;; --) break
