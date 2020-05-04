@@ -280,7 +280,10 @@ cmd_exit () # exit all .mxtx processes running on this system (dry-run w/o '!')
 {
 	#pgrep -a '[.]mxtx'   # -a option not in older pgreps
 	ps x | grep '[.]mxtx' # if we also had -e, this would be unnecessary
-	test "${1-}" != '!' || x_exec pkill '[.]mxtx'
+
+	case ${1-} in	'!')	x_exec pkill '[.]mxtx'
+		;;	[!.]*)	x_exec pkill -f "[.]mxtx.*-c$1"
+	esac
 
 	echo "Add '!' to the command line to exit the processes shown above"
 }
