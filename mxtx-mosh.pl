@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Sat 03 Feb 2018 19:31:00 EET too
-# Last modified: Sat 10 Mar 2018 12:05:59 +0200 too
+# Last modified: Tue 19 May 2020 18:52:45 +0300 too
 
 use 5.8.1;
 use strict;
@@ -25,16 +25,16 @@ die "Usage: $0 link [command [args]]\n" unless @ARGV;
 # - terminal window doesn't get [mosh] prefix
 # - doesn't "init" terminal (--no-init in mosh(1) options)
 
-sub get_dgt_port($)
+sub get_dgt_port($$)
 {
     socket my $s, AF_UNIX, SOCK_DGRAM, 0 or die 'socket: ', $!;
     # currently only linux abstract socket space -- portability TBD
-    my $to = pack('Sxa*', AF_UNIX, "/tmp/user-1000/mxtx-dgt,$_[0]");
+    my $to = pack('Sxa*', AF_UNIX, "/tmp/user-$</mxtx-dgt,$_[0]");
     setsockopt $s, SOL_SOCKET, SO_REUSEADDR, 1;
     # autobind (see man 7 unix)
     bind $s, pack('S', AF_UNIX) or die 'bind: ', $!;
     unless (send $s, "\0\0", 0, $to) {
-	return 0 if $!{ECONNREFUSED};
+	return 0 if $_[1] == 0 and $!{ECONNREFUSED};
 	die 'send: ', $!;
     }
     alarm 2;
@@ -47,10 +47,10 @@ sub get_dgt_port($)
 
 my $mxtxdir = $ENV{HOME} . '/.local/share/mxtx';
 
-my $dgt_port = get_dgt_port $ARGV[0];
+my $dgt_port = get_dgt_port $ARGV[0], 0;
 if ($dgt_port == 0) {
     system $mxtxdir . '/mxtx-dgramtunneld', $ARGV[0];
-    $dgt_port = get_dgt_port $ARGV[0];
+    $dgt_port = get_dgt_port $ARGV[0], 1;
     die if $dgt_port == 0
 }
 
