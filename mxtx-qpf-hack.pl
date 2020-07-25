@@ -8,12 +8,15 @@
 #	    All rights reserved
 #
 # Created: Fri 06 Apr 2018 18:36:35 EEST too
-# Last modified: Thu 20 Sep 2018 20:01:44 +0300 too
+# Last modified: Mon 23 Mar 2020 21:41:49 +0200 too
 
 # mxtx quick port forward hack
 #
-# this tool port forwards a port from local host
-# to remote ipv4/port at an mxtx endpoint
+# Forward a port from local host to remote ipv4/port
+# at an mxtx endpoint.
+# with throttle (when throttle-ms not zero) wait
+# before writing to mtxt endpoint -- work around
+# some experienced unexpected exits...
 
 use 5.8.1;
 use strict;
@@ -21,9 +24,10 @@ use warnings;
 
 $ENV{'PATH'} = '/tus/kim/pa/';
 
-die "Usage: $0 local-port mxtx-peer remote-ip remote-port\n"
-  unless @ARGV == 4;
+die "Usage: $0 [throttle-ms] local-port mxtx-peer remote-ip remote-port\n"
+  unless @ARGV == 4 or @ARGV == 5;
 
+my $throttle = (@ARGV == 5)? (shift(@ARGV) / 1000): 0;
 
 use IO::Socket::INET;
 
@@ -62,6 +66,7 @@ while (my $asock = $lsock->accept()) {
 			die $! unless defined $ev;
 			print STDERR "<<< Read $ev bytes >>>\n";
 			die "EOF" if $ev == 0;
+			select undef,undef,undef, $throttle if $throttle;
 			if (syswrite(S, $buf) != $ev) {
 				die "write not $ev";
 			}
