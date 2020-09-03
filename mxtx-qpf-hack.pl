@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Fri 06 Apr 2018 18:36:35 EEST too
-# Last modified: Mon 23 Mar 2020 21:41:49 +0200 too
+# Last modified: Thu 03 Sep 2020 22:54:54 +0300 too
 
 # mxtx quick port forward hack
 #
@@ -49,8 +49,8 @@ while (my $asock = $lsock->accept()) {
 	}
 	close $lsock;
 	socket S, AF_UNIX, SOCK_STREAM, 0 or die 'socket: ', $!;
-	my $to = pack('Sxa*', AF_UNIX, "/tmp/user-1000/mxtx,$ARGV[1]");
-	connect S, $to or die $!;
+	my $to = pack('Sxa*', AF_UNIX, "/tmp/user-$</mxtx,$ARGV[1]");
+	connect S, $to or die "$to: $!";
 
 	my $conn_cmd = ":connect\0$ARGV[2]\0$ARGV[3]\0";
 	syswrite S, pack('xxn', length($conn_cmd)) . $conn_cmd;
