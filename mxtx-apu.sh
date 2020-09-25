@@ -227,7 +227,8 @@ cmd_sshfs () # sshfs mount using mxtx tunnel
 
 cmd_sftp () # like sftp, but via mxtx tunnel
 {
-	MXTX_APU_WRAPPER=sftp x_exec sftp -S "$0" "$@"
+	export MXTX_APU_WRAPPER=sftp
+	x_exec sftp -S "$0" "$@"
 }
 
 cmd_tcp1271c () # tunnel localhost connection to mxtx endpoint
@@ -258,7 +259,8 @@ _cmd_xpra () # xpra support (wip)
 	case $1 in initenv | showconfig | list ) x_exec xpra "$@" ; esac
 	test $# -gt 1 || die "$0 xpra $1 needs display arg"
 	xcmd=$1 disp=$2; shift 2
-	MXTX_APU_WRAPPER=xpra x_exec xpra --ssh="$0" "$xcmd" ssh:"$disp" "$@"
+	export MXTX_APU_WRAPPER=xpra
+	x_exec xpra --ssh="$0" "$xcmd" ssh:"$disp" "$@"
 }
 
 cmd_vsfa () # wrap open() and stat() syscalls for opportunistic remote access
