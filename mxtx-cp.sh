@@ -8,7 +8,7 @@
 #           All rights reserved
 #
 # Created: Tue 24 Oct 2017 19:45:43 EEST too
-# Last modified: Wed 15 Apr 2020 21:46:41 +0300 too
+# Last modified: Thu 19 Nov 2020 21:09:12 +0200 too
 
 case ~ in '~') echo "'~' does not expand. old /bin/sh?" >&2; exit 1; esac
 
@@ -29,15 +29,9 @@ x_env () { printf '+ %s\n' "$*" >&2; env "$@"; }
 x_eval () { printf '+ %s\n' "$*" >&2; eval "$*"; }
 x_exec () { printf '+ %s\n' "$*" >&2; exec "$@"; die "exec '$*' failed"; }
 
-set_nap0 () # not absolute path $0 (best effort heuristics)
-{
-	case $0 in /* | */*/*) nap0=${0##*/} ;; *) nap0=$0 ;; esac
-	set_nap0 () { :; }
-}
-
 if test $# = 0
-then set_nap0; printf >&2 %s\\n ''\
-  "Usage: $nap0 [options] [link:]src... [link:]dest" ''\
+then printf >&2 %s\\n ''\
+  "Usage: ${0##*/} [options] [link:]src... [link:]dest" ''\
   '  -[arpcsrtunxzCSHL]: as in rsync(1)'\
   "  -v's and -q's: one -v (with --progress) is default"\
   '  --exclude=, --rsync-path=, --max-size=, --min-size=, --inplace,'\
@@ -64,7 +58,7 @@ q=0 excl= rspath= tar=false
 while getopts ':arpcsrtunzCSHLxqv' opt
 do case $opt
    in '?')
-	test "$OPTARG" = - || die "'-$OPTARG': unknown short option"
+	test "$OPTARG" = - || die "'-$OPTARG': unknown ${0##*/} short option"
 	OPTIND=2
 	case $1
 	in --tar) tar=true
@@ -73,20 +67,20 @@ do case $opt
 	;; --exclude=*) excl=${1#*=}
 	;; --rsync-path) rspath=$2; OPTIND=3
 	;; --rsync-path=*) rspath=${1#*=}
-	;; --max-size|-min-size) addlopt $1 $2; OPTIND=3
-	;; --max-size=*|-min-size=*) addlopt ${1%%=*} ${1#*=}
+	;; --max-size | --min-size) addlopt $1 $2; OPTIND=3
+	;; --max-size=* | --min-size=*) addlopt ${1%%=*} ${1#*=}
 	;; --existing | --ignore-existing) addlopt $1
 	;; --partial | --inplace) addlopt $1  # partial kept for backw. compat.
 	;; --one-file-system) addsopt x
 	;; --dry-run) addsopt n
 	;; --) break
-	;; *) die "'$1': unknown long option"
+	;; *) die "'$1': unknown ${0##*/} long option"
 	esac
    ;; a|r|p|c|s|r|t|u|n|z|C|S|H|L) addsopt $opt
    ;; x) sopts=$sopts$opt
    ;; q) q=$((q + 1))
    ;; v) q=$((q - 1))
-   ;; *) die "'-$opt': unknown short option"
+   ;; *) die "'-$opt': unknown ${0##*/} short option"
    esac
    test $OPTIND = 1 || { shift $((OPTIND - 1)); OPTIND=1; }
 done
@@ -98,6 +92,9 @@ case $q in -*) addsopt vv; addlopt --progress
 esac
 
 $tar || {
+	if test $# = 1
+	then die "${0##*/}: missing destination operand after '$1'"
+	fi
 	case $0 in */*) c=$0 ;; *) c=./$0 ;; esac
 	case $sopts in *v*) exec=x_exec ;; *) exec=exec ;; esac
 	#exec=echo
