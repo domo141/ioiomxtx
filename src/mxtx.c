@@ -10,7 +10,7 @@
  WARN="$WARN -Wmissing-include-dirs -Wundef -Wbad-function-cast -Wlogical-op"
  WARN="$WARN -Waggregate-return -Wold-style-definition"
  WARN="$WARN -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls"
- WARN="$WARN -Wnested-externs -Winline -Wvla -Woverlength-strings -Wpadded"
+ WARN="$WARN -Wnested-externs -Winline -Wvla -Woverlength-strings"
  case ${1-} in '') set x -O2; shift; esac
  #case ${1-} in '') set x -ggdb; shift; esac
  CFLAGS="$WARN -DSERVER -DCLIENT $DVERSION"
@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Tue 13 Sep 2018 22:22:27 +0300 too
+ * Last modified: Sat 05 Dec 2020 16:36:42 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):

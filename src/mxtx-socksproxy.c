@@ -8,7 +8,7 @@
  WARN="$WARN -Wmissing-include-dirs -Wundef -Wbad-function-cast -Wlogical-op"
  WARN="$WARN -Waggregate-return -Wold-style-definition"
  WARN="$WARN -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls"
- WARN="$WARN -Wnested-externs -Winline -Wvla -Woverlength-strings -Wpadded"
+ WARN="$WARN -Wnested-externs -Winline -Wvla -Woverlength-strings"
  case ${1-} in '') set x -O2; shift; esac
  #case ${1-} in '') set x -ggdb; shift; esac
  set -x; exec ${CC:-gcc} -std=c99 $WARN "$@" -o "$trg" "$0" -L. -lmxtx # -flto
@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Sat 11 May 2019 11:48:51 +0300 too
+ * Last modified: Sat 05 Dec 2020 16:36:28 +0200 too
  */
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
