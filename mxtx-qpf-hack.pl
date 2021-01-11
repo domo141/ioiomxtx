@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Fri 06 Apr 2018 18:36:35 EEST too
-# Last modified: Thu 03 Sep 2020 22:54:54 +0300 too
+# Last modified: Mon 11 Jan 2021 17:24:55 +0200 too
 
 # mxtx quick port forward hack
 #
@@ -59,25 +59,38 @@ while (my $asock = $lsock->accept()) {
 	# fixme: check != 0
 	my ($lin, $pin) = (fileno($asock), fileno(S));
 	my $rin; vec($rin, $lin, 1) = 1; vec($rin, $pin, 1) = 1;
+	my ($tev1, $tev2) = (0, 0);
 	while (1) {
 		my $rout; select($rout = $rin, undef, undef, undef);
 		if (vec($rout, $lin, 1)) {
 			my $ev = sysread $asock, $buf, 65536;
-			die $! unless defined $ev;
-			print STDERR "<<< Read $ev bytes >>>\n";
-			die "EOF" if $ev == 0;
+			die "$$ <<< $!\n" unless defined $ev;
+			$tev1 += $ev;
+			if ($ev == 0) {
+			    print STDERR "$$ <<< EOF ($tev1)\n";
+			    vec($rin, $lin, 1) = 0;
+			    exit unless $rin;
+			    next
+			}
+			print STDERR "$$ <<< Read $ev bytes ($tev1) >>>\n";
 			select undef,undef,undef, $throttle if $throttle;
 			if (syswrite(S, $buf) != $ev) {
-				die "write not $ev";
+				die "$$ <<< write not $ev";
 			}
 		}
 		if (vec($rout, $pin, 1)) {
 			my $ev = sysread S, $buf, 65536;
-			die $! unless defined $ev;
-			print STDERR ">>> Read $ev bytes <<<\n";
-			die "EOF" if $ev == 0;
+			die "$$ >>> $!\n" unless defined $ev;
+			$tev2 += $ev;
+			if ($ev == 0) {
+			    print STDERR "$$ >>> EOF ($tev2)\n";
+			    vec($rin, $pin, 1) = 0;
+			    exit unless $rin;
+			    next
+			}
+			print STDERR "$$ >>> Read $ev bytes ($tev2) <<<\n";
 			if (syswrite($asock, $buf) != $ev) {
-				die "write not $ev";
+				die "$$ >>> write not $ev";
 			}
 		}
 	}
