@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# -*- mode: cperl; cperl-indent-level: 4 -*-
+# -*- mode: cperl; cperl-indent-level: 8 -*-
 # $ mxtx-qpf-hack.pl $
 #
 # Author: Tomi Ollila -- too ät iki piste fi
@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Fri 06 Apr 2018 18:36:35 EEST too
-# Last modified: Mon 11 Jan 2021 17:24:55 +0200 too
+# Last modified: Sun 17 Jan 2021 16:27:02 +0200 too
 
 # mxtx quick port forward hack
 #
@@ -66,13 +66,14 @@ while (my $asock = $lsock->accept()) {
 			my $ev = sysread $asock, $buf, 65536;
 			die "$$ <<< $!\n" unless defined $ev;
 			$tev1 += $ev;
+			$_ = $tev2; s/(...)(...)$/ $1 $2/;
 			if ($ev == 0) {
-			    print STDERR "$$ <<< EOF ($tev1)\n";
-			    vec($rin, $lin, 1) = 0;
-			    exit unless $rin;
-			    next
+				print STDERR "$$ <<< EOF ($_)\n";
+				vec($rin, $lin, 1) = 0;
+				exit unless $rin;
+				next
 			}
-			print STDERR "$$ <<< Read $ev bytes ($tev1) >>>\n";
+			print STDERR "$$ <<< Read $ev bytes ($_) >>>\n";
 			select undef,undef,undef, $throttle if $throttle;
 			if (syswrite(S, $buf) != $ev) {
 				die "$$ <<< write not $ev";
@@ -82,13 +83,14 @@ while (my $asock = $lsock->accept()) {
 			my $ev = sysread S, $buf, 65536;
 			die "$$ >>> $!\n" unless defined $ev;
 			$tev2 += $ev;
+			$_ = $tev2; s/(...)(...)$/ $1 $2/;
 			if ($ev == 0) {
-			    print STDERR "$$ >>> EOF ($tev2)\n";
-			    vec($rin, $pin, 1) = 0;
-			    exit unless $rin;
-			    next
+				print STDERR "$$ >>> EOF ($_)\n";
+				vec($rin, $pin, 1) = 0;
+				exit unless $rin;
+				next
 			}
-			print STDERR "$$ >>> Read $ev bytes ($tev2) <<<\n";
+			print STDERR "$$ >>> Read $ev bytes ($_) <<<\n";
 			if (syswrite($asock, $buf) != $ev) {
 				die "$$ >>> write not $ev";
 			}
