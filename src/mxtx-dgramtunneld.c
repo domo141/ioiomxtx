@@ -11,11 +11,11 @@
  *
  * Author: Tomi Ollila -- too ät iki piste fi
  *
- *      Copyright (c) 2017 Tomi Ollila
+ *      Copyright (c) 2018 Tomi Ollila
  *          All rights reserved
  *
  * Created: Mon 05 Feb 2018 04:49:13 -0800 too
- * Last modified: Wed 14 Mar 2018 00:27:56 +0200 too
+ * Last modified: Fri 19 Feb 2021 11:47:41 +0200 too
  */
 
 // hint: strace -f [-o of] ... and strace -p ... are useful when inspecting...
@@ -111,8 +111,9 @@ int main(int argc, char * argv[])
 static int bind_dgram_isock_to_fd_3(int sp, int ep)
 {
     int sd = xsocket(AF_INET, SOCK_DGRAM);
-    int one = 1;
-    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
+    // don't for udp sockets...
+    //int one = 1;
+    //setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
     struct sockaddr_in iaddr = {
         .sin_family = AF_INET,
         .sin_addr.s_addr = IADDR(127,0,0,1)
@@ -123,7 +124,7 @@ static int bind_dgram_isock_to_fd_3(int sp, int ep)
             xmovefd(sd, 3);
             return i;
         }
-        if (errno == ECONNREFUSED)
+        if (errno == EADDRINUSE)
             continue;
         die("bind:");
     }
