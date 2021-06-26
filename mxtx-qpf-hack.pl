@@ -8,7 +8,7 @@
 #	    All rights reserved
 #
 # Created: Fri 06 Apr 2018 18:36:35 EEST too
-# Last modified: Tue 19 Jan 2021 17:10:18 +0200 too
+# Last modified: Mon 07 Jun 2021 23:21:32 +0300 too
 
 # mxtx quick port forward hack
 #
@@ -75,9 +75,9 @@ while (my $asock = $lsock->accept()) {
 			}
 			print STDERR "$$ <<< Read $ev bytes ($_) >>>\n";
 			select undef,undef,undef, $throttle if $throttle;
-			if (syswrite(S, $buf) != $ev) {
-				die "$$ <<< write not $ev";
-			}
+			my $wv = syswrite(S, $buf);
+			die "$$ <<< wrote $wv bytes -- expected $ev bytes",
+			  ' throttle (more) (for now)' unless $wv == $ev;
 		}
 		if (vec($rout, $pin, 1)) {
 			my $ev = sysread S, $buf, 65536;
@@ -91,9 +91,9 @@ while (my $asock = $lsock->accept()) {
 				next
 			}
 			print STDERR "$$ >>> Read $ev bytes ($_) <<<\n";
-			if (syswrite($asock, $buf) != $ev) {
-				die "$$ >>> write not $ev";
-			}
+			my $wv = syswrite($asock, $buf);
+			die "$$ >>> wrote $wv bytes -- expected $ev bytes",
+			  ' throttle (more) (for now)' unless $wv == $ev;
 		}
 	}
 }
