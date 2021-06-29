@@ -2,7 +2,7 @@
 # -*- mode: cperl; cperl-indent-level: 4 -*-
 
 # copy this file as index-src.pl, replace your links below in $USER_LINKS
-# (perhaps edit $HEAD and $TAIL), and then do $ perl index.pl
+# (perhaps edit $HEAD and $TAIL), and then do $ perl index-src.pl
 
 use 5.8.1;
 use strict;
@@ -57,6 +57,7 @@ my @rows = split /\n\n+/, $USER_LINKS;
 
 sub row($_) {
     foreach (split /\n/, $_[0]) {
+	next if /^\s*#/;
 	/^\s*(\S+)\s+(\S.*)/ or next;
 	print O qq'<td><a href="$1" target=_blank>$2</a></td>\n';
     }
