@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Sat 05 Dec 2020 16:36:28 +0200 too
+ * Last modified: Tue 22 Feb 2022 19:18:43 +0200 too
  */
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
@@ -161,17 +161,17 @@ static void init(int argc, char * argv[])
             while (isspace(*dp)) dp++;
             char * ip = strpbrk(dp, " \t");
             if (ip == null) {
-                warn("%s:%d: no space separator\n", argv[i], ln);
+                warn("%s:%d: no space separator", argv[i], ln);
                 continue;
             }
             if (dp == ip) {
-                warn("%s:%d: hostname empty\n", argv[i], ln);
+                warn("%s:%d: hostname empty", argv[i], ln);
                 continue;
             }
             int hnlen = ip - dp;
             *ip = '\0';
             if (hnlen > 250) {
-                warn("%s:%d: hostname '%s' too long\n", argv[i], ln, dp);
+                warn("%s:%d: hostname '%s' too long", argv[i], ln, dp);
                 continue;
             }
             while (isspace(*++ip)) {};
@@ -179,19 +179,19 @@ static void init(int argc, char * argv[])
             // fix multiple spaces, laita pituus talteen
             while (!isspace(*ep) && *ep != '\0') ep++;
             if (ip == ep) {
-                warn("%s:%d: ip address empty\n", argv[i], ln);
+                warn("%s:%d: ip address empty", argv[i], ln);
                 continue;
             }
             int iplen = ep - ip;
             *ep = '\0';
             if (iplen > 42) {
-                warn("%s%d: ip address '%s' too long\n", argv[i], ln, ip);
+                warn("%s%d: ip address '%s' too long", argv[i], ln, ip);
                 continue;
             }
             if (! isalnum(dp[0])) // check "outcomments"
                 continue;
             p += snprintf(p, 512, "%c%c%s%c%s", hnlen, iplen, dp, 0, ip) + 1;
-            fprintf(stderr, " %s: %s\n", dp, ip);
+            fprintf(stderr, " %s: '%s'\n", dp, ip);
         }
         *p++ = '\0'; // end link with zero-length field (no second)
         close(sd);
@@ -289,7 +289,7 @@ int main(int argc, char * argv[])
 
     while (1) {
         if (poll(pfds, 2, -1) <= 0) {
-            warn("unexpected poll() return without any input available.");
+            warn("unexpected poll() return without any input available");
             sleep(1);
         }
         if (pfds[0].revents) io(3, 4);
@@ -374,6 +374,7 @@ static void start(void)
 
         strcpy(buf + 304, ":connect");
         p = buf + 313;
+        dprintf0("type: %d\n", buf[3]);
         if (buf[3] == 0x03) { // domain name
             int hlen = ubuf[4];
             int rest = hlen + 7;
@@ -390,12 +391,16 @@ static void start(void)
             else p += sprintf(p, "%s", buf + 5) + 1; // for warn() below
         }
         else if (buf[3] == 0x01) {  // ipv4 address
+            warn("Sorry, forgot to complete ipv4 address type support\n"
+                 "\tALL_PROXY=socks5h://127.0.0.1:1080 could help...");
             if (len != 10)
                 die("IPv4 socks5 request not 10 octets (was %d octets)", len);
             port = ubuf[8] * 256 + ubuf[9];
             p += sprintf(p, "%u.%u.%u.%u", ubuf[4],ubuf[5],ubuf[6],ubuf[7]) + 1;
         }
         else if (buf[3] == 0x04) {  // ipv6 address
+            warn("Sorry, forgot to complete ipv6 address type support\n"
+                 "\tALL_PROXY=socks5h://127.0.0.1:1080 could help...");
             if (len != 22)
                 die("IPv6 socks5 request not 22 octets (was %d octets)", len);
             port = ubuf[20] * 256 + ubuf[21];
@@ -422,7 +427,7 @@ static void start(void)
         warn("Connecting %s %s:%d via %s", buf + 5, buf + 313, port, net);
     }
     else
-        warn("Connecting %s:%d via %s", buf + 313, port, net); // XXX loglevel //
+        warn("Connecting %s:%d via %s", buf + 313, port, net); // XXX loglevel
 
     int sd;
     if (net[0] == '\0') {
@@ -462,6 +467,7 @@ static void io(int ifd, int ofd)
 {
     char buf[8192];
     int l = read(ifd, buf, sizeof buf);
+    dprintf0("io: %d %d > %d", ifd, l, ofd);
     if (l <= 0) {
         // hmm, econnreset...
         if (l == 0 || errno == ECONNRESET) {
