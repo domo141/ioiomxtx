@@ -116,6 +116,12 @@ cmd_sshmxtx () # create default forward tunnel using ssh
 	x_exec ioio.pl / .mxtx -c"$link" / ssh "$remote" env $* .mxtx -s
 }
 
+cmd_revmxtx () # create "reverse" tunnel
+{
+	test $# -ge 2 || usage 'link "back"link'
+	x_exec ioio.pl mxtx-rsh "$1" .mxtx -c"'$2'" /// .mxtx -s~
+}
+
 set_i2u_ldpra ()
 {
 	ldpra=$mxtxdir/ldpreload-i2uconnect5.so
@@ -173,7 +179,7 @@ cmd_ffox () # start firefox browser w/ mxtx socks5 tunneling
 	x_exec firefox -profile $profile_dir $prv -no-remote "$@" &
 }
 
-cmd_curl () # run curl via socks5 tunneling
+cmd_curl () # run curl via socks5 tunneling (with socksproxify like 2 above)
 {
 	set_i2u_ldpra
 	x_exec curl --socks5-hostname 127.1:1080 "$@"
@@ -279,9 +285,12 @@ cmd_vsfa () # wrap open() and stat() syscalls for opportunistic remote access
 
 cmd_ping () # 'ping' (including time to execute `date` on destination)
 {
-	x export TIME='elapsed: %e s'
-	x date
-	x_exec /usr/bin/time mxtx-io "$1" date
+	test $# = 0 && usage 'link'
+	export TIME='elapsed: %e s'
+	for arg
+	do 	x date
+		x /usr/bin/time mxtx-io "$arg" date
+	done
 }
 
 cmd_exit () # exit all .mxtx processes running on this system (dry-run w/o '!')
