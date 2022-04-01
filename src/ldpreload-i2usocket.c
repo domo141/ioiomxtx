@@ -32,7 +32,7 @@
  * Created: Tue 22 Nov 2011 16:55:43 +0200 too
  * For ttt: Fri 03 Oct 2014 19:21:19 +0300 too
  * For mxtx: Sat 26 Aug 2017 21:24:28 +0300 too
- * Last modified: Wed 14 Mar 2018 00:29:47 +0200 too
+ * Last modified: Sat 02 Apr 2022 00:22:18 +0300 too
  */
 
 #define VERDATE "1.1 (2017-08-31)"
@@ -391,7 +391,7 @@ int connect(int sd, const struct sockaddr * addr, socklen_t addrlen)
 
     /* else non-127.0.0.1 destination: socks5 communication */
 
-    write(sd, "\005\001", 3);
+    (void)!write(sd, "\005\001", 3);
     char buf[272];
     if (pollthis(sd, POLLIN) < 0)
 	goto _nogo;

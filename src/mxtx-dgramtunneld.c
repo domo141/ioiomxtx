@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Mon 05 Feb 2018 04:49:13 -0800 too
- * Last modified: Fri 19 Feb 2021 11:47:41 +0200 too
+ * Last modified: Sat 02 Apr 2022 00:22:18 +0300 too
  */
 
 // hint: strace -f [-o of] ... and strace -p ... are useful when inspecting...
@@ -134,7 +134,7 @@ static int bind_dgram_isock_to_fd_3(int sp, int ep)
 
 static bool initial_protosync(int fd, const char * sm, const char * em)
 {
-    write(fd, sm, 8);
+    (void)!write(fd, sm, 8);
     char buf[8];
     if (read(fd, buf, 8) != 8) {
         warn("No response from remote");
@@ -176,7 +176,7 @@ static bool connect_to_server_fd_5(const char * lnk)
     //char cmd[] = "....strace\0./mxtx-dgramtunneld";
     char cmd[] = "....mxtx-dgramtunneld";
     cmd[0] = cmd[1] = cmd[2] = 0; cmd[3] = sizeof cmd - 4;
-    write(5, cmd, sizeof cmd);
+    (void)!write(5, cmd, sizeof cmd);
 
     // in case of failure no need to close fd 5, will be dup2()d over next time
     return initial_protosync(5, "mxtxdtc1", "mxtxdts1");
@@ -318,7 +318,7 @@ static void client(const char * lnk)
                 // XXX portmap table could in rare cases be too small
                 sbuf[0] = (len + 2) / 256; sbuf[1] = (len + 2) % 256;
                 sbuf[2] = sport / 256; sbuf[3] = sport % 256;
-                /* XXX CHK */ write(5, sbuf, len + 4);
+                /* XXX CHK */ (void)!write(5, sbuf, len + 4);
                 sent_after_recv++;
             }
         }
@@ -371,7 +371,7 @@ static void server(void)
                         const unsigned char * pp = _lpktread_peek(&pr, 4);
                         // collapse consecutive pings into one //
                         if (!pp || memcmp(pp, "\000\002\000", 4) != 0)
-                            write(1, "\000\002\000", 4); // pong
+                            (void)!write(1, "\000\002\000", 4); // pong
                         goto next1;
                     }
                     die("tunnel data len %d < 2!", len);

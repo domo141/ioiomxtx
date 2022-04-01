@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Sat 02 Sep 2017 18:42:37 EEST too
- * Last modified: Sat 26 Feb 2022 22:53:38 +0200 too
+ * Last modified: Sat 02 Apr 2022 00:22:18 +0300 too
  */
 
 #include "more-warnings.h"
@@ -168,7 +168,7 @@ static void socket_io(LPktRead * pr);
 int main(void)
 //int main(int argc, char * argv[]) // later perhaps debug options...
 {
-    write(1, mxtx_rshd_ident, sizeof mxtx_rshd_ident);
+    (void)!write(1, mxtx_rshd_ident, sizeof mxtx_rshd_ident);
     LPktRead pr;
     xreadfully(0, pr.data, sizeof mxtx_rshc_ident);
     if (memcmp(pr.data, mxtx_rshc_ident, sizeof mxtx_rshc_ident) != 0)
@@ -268,7 +268,7 @@ int main(void)
     }
 _cont:
     //signal(SIGCHLD, SIG_DFL); // seemed to inherit parent NOCLDWAIT ? //
-    write(1, "\0\001" "a", 3);
+    (void)!write(1, "\0\001" "a", 3);
     BE;
     char ibuf[8192];
     if (tty) {

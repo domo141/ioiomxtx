@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Sun 27 Feb 2022 22:46:49 +0200 too
+ * Last modified: Sat 02 Apr 2022 00:22:18 +0300 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -674,7 +674,7 @@ static void start_client(char * socket_path)
 	die("Could not send client protocol ident:");
 
     wait_peer_protocol_ident(0, server_protocol_ident);
-    write(1, "", 1);
+    (void)!write(1, "", 1);
     char c; xreadfully(0, &c, 1);
 
     init_comm();
@@ -947,7 +947,7 @@ static void start_server(const char * cwd_path)
     if (cwd_path[0] == '~') {
 	// XXX fixme: add xchdir() -- also other paths than ~... (if ever...)
 	if (chdir(home) == 0 && cwd_path[1] == '/' && cwd_path[2] != '\0')
-	    (void)chdir(cwd_path + 2);
+	    (void)!chdir(cwd_path + 2);
     }
     int homelen = strlen(home);
     G.u.s.local_path = malloc(homelen + sizeof(LOCAL_MXTX_DIR) + 64);
@@ -973,7 +973,7 @@ static void start_server(const char * cwd_path)
 	die("Could not send client ident:");
 
     wait_peer_protocol_ident(0, client_protocol_ident);
-    write(1, "", 1);
+    (void)!write(1, "", 1);
     char c; xreadfully(0, &c, 1);
 
     init_comm();

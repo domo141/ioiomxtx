@@ -19,7 +19,7 @@
  *          All rights reserved
  *
  * Created: Thu 01 Nov 2018 21:07:27 +0200 too
- * Last modified: Thu 08 Nov 2018 22:35:30 +0200 too
+ * Last modified: Sat 02 Apr 2022 00:22:18 +0300 too
  */
 
 /* This preload library forwards requested localhost connections to a
@@ -418,7 +418,7 @@ _deffn ( int, connect, (int sd,
 		      0, 0, pl, pp, 0);
     if (bl > isizeof buf - 4) die("unlikely internal error");
     *((uint32_t*)&buf) = htonl(bl);
-    write(sd, buf, bl + 4);
+    (void)!write(sd, buf, bl + 4);
     BB;
     struct pollfd pfd = { .fd = sd, .events = POLLIN };
     if (poll(&pfd, 1, 5000) <= 0) errno_return(EIO);

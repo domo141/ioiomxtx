@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Tue 22 Feb 2022 19:18:43 +0200 too
+ * Last modified: Sat 02 Apr 2022 00:22:37 +0300 too
  */
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
@@ -145,7 +145,7 @@ static void init(int argc, char * argv[])
         else {
             sd = connect_unix_stream_mxtx_socket(argv[i], "");
             if (sd < 0) continue;
-            write(sd, "\0\0\0\024~cat\0hosts-to-proxy\0", 24);
+            (void)!write(sd, "\0\0\0\024~cat\0hosts-to-proxy\0", 24);
         }
         // we know argv[i] maxlen is less than 108
         p += snprintf(p, 256, "%c%s", (int)strlen(argv[i]), argv[i]) + 1;
@@ -363,7 +363,7 @@ static void start(void)
         if (len != ubuf[1] + 2)
             die("Unexpected number of octets of input data(%d != %d)",
                 len, ubuf[1] + 2);
-        write(3, "\005", 2); // reply 05 00 (no authentication required)
+        (void)!write(3, "\005", 2); // reply 05 00 (no authentication required)
 
         // we trust such a small amout of data can be read on one call...
         len = read(3, buf, 5 + 255 + 2); // VER CMD RV ATYP DST.ADDR DST.PORT
@@ -420,7 +420,7 @@ static void start(void)
     alarm(0);
     if (net == null) {
         warn("'%s'(%d) not in any configuration", buf + 313, port);
-        write(3, "\005\004\0\001" "\0\0\0\0" "\0", 10);
+        (void)!write(3, "\005\004\0\001" "\0\0\0\0" "\0", 10);
         exit(0);
     }
     if (buf[0] == 5 && buf[3] == 0x03) {
@@ -441,7 +441,7 @@ static void start(void)
         len = p - buf - 304 + sprintf(p, "%d", port) + 1;
         ubuf[300] = ubuf[301] = 0; // protocol version
         ubuf[302] = len / 256; ubuf[303] = len % 256; // msg length
-        write(sd, buf + 300, len + 4);
+        (void)!write(sd, buf + 300, len + 4);
         if (read(sd, buf, 1) != 1)
             die("Did not get reply from mxtx socket '%s' (%s:%d):",
                 net, buf + 313, port);
@@ -449,15 +449,15 @@ static void start(void)
             warn("Nonzero (%d) reply code for '%s:%d'", buf[0],buf + 313,port);
             switch (ubuf[0]) {
             case ECONNREFUSED: // check matching errno's on every OS
-                write(3, "\005\005\0\001" "\0\0\0\0" "\0", 10); break;
+                (void)!write(3, "\005\005\0\001" "\0\0\0\0" "\0", 10); break;
             default:
-                write(3, "\005\001\0\001" "\0\0\0\0" "\0", 10); break;
+                (void)!write(3, "\005\001\0\001" "\0\0\0\0" "\0", 10); break;
             }
             exit(0);
         }
     }
     // request granted, ipv4 address 10.0.0.7, port 16128
-    write(3, "\005\000\0\001" "\012\0\0\007" "\077", 10);
+    (void)!write(3, "\005\000\0\001" "\012\0\0\007" "\077", 10);
 
     // examine possibility to fdpass socket fd ... //
     xmovefd(sd, 4);
@@ -508,19 +508,19 @@ static void may_serve_index_file_request(const char * host, char * rbuf)
         // xxx create better (i.e. 'a') reply page perhaps
         die("Cannot connect to mxtx socket '%s':", rbuf);
 
-    write(sd, "\0\0\0\020~cat\0index.html\0", 20);
+    (void)!write(sd, "\0\0\0\020~cat\0index.html\0", 20);
 
     // XXX hardcoded socks5 reply
     // request granted, ipv4 address 10.0.0.7, port 16128 (^^^ duplicated ^^^)
-    write(3, "\005\000\0\001" "\012\0\0\007" "\077", 10);
+    (void)!write(3, "\005\000\0\001" "\012\0\0\007" "\077", 10);
     alarm(10);
     char buf[4096];
-    read(3, buf, sizeof buf); // and discard it //
+    (void)!read(3, buf, sizeof buf); // and discard it //
 #define reply ("HTTP/1.1 200 OK\r\n" "Connection: close\r\n" "\r\n")
-    write(3, reply, sizeof reply - 1);
+    (void)!write(3, reply, sizeof reply - 1);
     int len;
     while ((len = read(sd, buf, sizeof buf)) > 0)
-        write(3, buf, len);
+        (void)!write(3, buf, len);
     close(3);
     close(sd);
     exit(0);
