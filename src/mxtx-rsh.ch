@@ -6,14 +6,14 @@
  *          All rights reserved
  *
  * Created: Sat 02 Sep 2017 18:24:44 EEST too
- * Last modified: Mon 04 Sep 2017 22:57:48 +0300 too
+ * Last modified: Sat 26 Feb 2022 22:19:31 +0200 too
  */
 
 // some common parts of mxtx-rsh and mxtx-rshd -- contains generated code
 
-#define MXTX_RSHC_IDENT "mxtxrsh0"
-const char mxtx_rshc_ident[8] = { 'm','x','t','x','r','s','h','0' };
-const char mxtx_rshd_ident[8] = { 'm','x','t','x','r','s','h','1' };
+#define MXTX_RSHC_IDENT "mxtxrsh2"
+const char mxtx_rshc_ident[8] = { 'm','x','t','x','r','s','h','2' };
+const char mxtx_rshd_ident[8] = { 'm','x','t','x','r','s','h','3' };
 
 
 // signal delivery.  // expect ack // perhaps later

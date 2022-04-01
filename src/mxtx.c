@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Sat 05 Dec 2020 16:36:42 +0200 too
+ * Last modified: Sun 27 Feb 2022 22:46:49 +0200 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -100,14 +100,14 @@
 // explicit flags to debug mxtx.c implementation problems...
 #define DEBUG_CMD_STRING 0
 
-#define BUFFER_SIZE 16384
+#define BUFFER_SIZE 65532
 
 // for some reason without this linking fails even
 // libmxtx.a vwarn() should not be referenced
 const char * _prg_ident = null;
 
-const char server_protocol_ident[4] = { 'm','x','t','1' };
-const char client_protocol_ident[4] = { 'm','x','t','0' };
+const char server_protocol_ident[4] = { 'm','x','t','3' };
+const char client_protocol_ident[4] = { 'm','x','t','2' };
 
 struct {
     const char * component_ident;
@@ -200,7 +200,7 @@ static void vout(int fd, const char * format, va_list ap)
     // XXX the outputs of separate iovs got intermixed. replacement below.
 }
 #pragma GCC diagnostic pop
-#else /* 0 */
+#else /* not 0 */
 static void vout(int fd, const char * format, va_list ap)
 {
     int error = errno;
@@ -291,12 +291,6 @@ die(const char * format, ...)
     exit(1);
 }
 
-static void sleep100ms(int c, int m)
-{
-    log2("sleep 100 msec (0.1 sec) (%d/%d)", c, m);
-    poll(0, 0, 100);
-}
-
 static void init_comm(void)
 {
     const int n = sizeof G.pfds / sizeof G.pfds[0];
@@ -361,8 +355,8 @@ static bool to_socket(int sd, void * data, size_t datalen)
 	return true;
     }
     // XXX did we write any data -- and if so, do we care (e.g. EPIPE anyway?)
-    if (errno == EPIPE) {
-	log3("Channel %d:%d disappeared (epipe)", sd,G.chnlcntr[sd]);
+    if (wlen < 0 && errno == EPIPE) {
+	log3("Channel %d:%d disappeared (epipe)", sd, G.chnlcntr[sd]);
 	return false;
     }
     char * buf = (char *)data;
@@ -373,7 +367,8 @@ static bool to_socket(int sd, void * data, size_t datalen)
 	// give peer 1/10 of a second to read it and retry.
 	// POLLOUT might inform that there is room for new data but
 	// write may still fail if the data doesn't fully fit ???
-	sleep100ms(tries, 100);
+	log2("sleep 100 msec (0.1 sec) (%d/100)", tries);
+	poll(0, 0, 100);
 
 	if (wlen < 0)
 	    wlen = 0;
@@ -383,9 +378,9 @@ static bool to_socket(int sd, void * data, size_t datalen)
 
 	wlen = write(sd, buf, dlen);
 #if EAGAIN != EWOULDBLOCK
-	if (errno != EAGAIN && errno != EWOULDBLOCK) {
+	if (wlen < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
 #else
-	if (errno != EWOULDBLOCK) {
+	if (wlen < 0 && errno != EWOULDBLOCK) {
 #endif
 	    warn("Channel %d fd gone ...:", sd);
 	    return false;
@@ -395,11 +390,11 @@ static bool to_socket(int sd, void * data, size_t datalen)
 #endif
 	if (wlen == dlen) {
 	    log2("Writing %lu bytes of data to %d took %d tries",
-		 datalen, sd, tries);
+		 datalen, sd, tries + 1);
 	    return true;
 	}
 	log4("%d: wlen %d (of %u):", sd, (int)wlen, (unsigned int)datalen);
-    } while (tries++ < 100); // 100 times makes that 10 sec total.
+    } while (tries++ < 100); // 100 times makes that ~10 sec total.
 
     log1("Peer #%d too slow to read traffic. Dropping", sd);
     return false;
@@ -751,8 +746,6 @@ static int server_handle_connect_completed(int pfdi)
     if (error != 0) {
 	errno = error;
 	warn("connect failed:");
-    }
-    if (error) {
 	unsigned char c = (unsigned char)error;
 	// in case of server, iopipe is fd 1
 	mux_to_iopipe(1, fd, &c, 1);
@@ -823,9 +816,15 @@ static int server_execute_command_buf(char * buf, int len)
 	}
 	if (memcmp(cmd, "mxtx-", 5) == 0) {
 	    if (cmdlen <= 60) {
+#if 1
 		strcpy(G.u.s.local_path_end, cmd);
 		if (access(G.u.s.local_path, X_OK) == 0)
 		    cmd = G.u.s.local_path;
+#else	// test use -- run command from current dir //
+		static char _cbuf[64];
+		snprintf(_cbuf, sizeof (_cbuf), "./%s", cmd);
+		cmd = _cbuf;
+#endif
 	    }
 	}
 	// reset signals handlers that were ignore to their defaults //
@@ -899,7 +898,6 @@ static void server_handle_client_message(void)
 	close_socket_and_remap(chnl);
 	return;
     }
-
     if (! to_socket(chnl, buf, len)) {
 	mux_eof_to_iopipe(1, chnl);
 	close_socket_and_remap(chnl);

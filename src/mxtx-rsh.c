@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Sun 03 Sep 2017 21:45:01 EEST too
- * Last modified: Wed 21 Mar 2018 19:09:08 +0200 too
+ * Last modified: Sat 26 Feb 2022 22:58:47 +0200 too
  */
 
 #include "more-warnings.h"
@@ -45,7 +45,7 @@
 #include "mxtx-lib.h"
 
 #include "mxtx-rsh.ch"
-#define LPKTREAD_DATA_BUFFER_SIZE 16384
+#define LPKTREAD_DATA_BUFFER_SIZE (65532 - 3)
 #include "lpktread.ch"
 
 #define null ((void*)0)
@@ -229,13 +229,17 @@ int main(int argc, char * argv[])
     // write whole command structure in one sweep
     (void)write(3, pr.data, p - pr.data);
     BE;
-    //BE;
-    xreadfully(3, pr.data, sizeof mxtx_rshd_ident + 3);
+    BB;
+    size_t l = read(3, pr.data, sizeof mxtx_rshd_ident + 3);
+    if (l < 8)
+        die("could not read rshd ident");
     if (memcmp(pr.data, mxtx_rshd_ident, sizeof mxtx_rshd_ident) != 0)
         die("server ident mismatch");
+    if (l < sizeof mxtx_rshd_ident + 3)
+        l = read(3, pr.data + l, sizeof mxtx_rshd_ident + 3 - l);
     if (memcmp(pr.data + sizeof mxtx_rshd_ident, "\0\001" "a", 3) != 0)
         die("initial ack not received");
-
+    BE;
     if (G.tty > 0) {
         struct termios tio = G.saved_tio;
         // see ttydefaults.h and then compare w/ what other sw does here

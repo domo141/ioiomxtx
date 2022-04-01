@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Sat 02 Sep 2017 18:42:37 EEST too
- * Last modified: Tue 13 Mar 2018 23:46:37 +0200 too
+ * Last modified: Sat 26 Feb 2022 22:53:38 +0200 too
  */
 
 #include "more-warnings.h"
@@ -53,7 +53,7 @@ void execvp(const char * file, const char ** argv);
 #include "mxtx-lib.h"
 
 #include "mxtx-rsh.ch"
-#define LPKTREAD_DATA_BUFFER_SIZE 16384
+#define LPKTREAD_DATA_BUFFER_SIZE (65532 - 3)
 #include "lpktread.ch"
 
 #define null ((void*)0)

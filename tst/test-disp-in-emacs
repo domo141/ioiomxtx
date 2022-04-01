@@ -24,6 +24,7 @@
 (other-window 1)
 (run "mxtx1" "./ioio.pl" "." "./mxtx -s~" "." "./mxtx -cu")
 (other-window 1)
+(sleep-for 0 200)
 ;;(split-window-below)
 (run "mxtx-sb" "./mxtx-socksproxy" "t" "u" "" "/")
 ;;(other-window 1)
