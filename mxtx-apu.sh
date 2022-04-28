@@ -313,7 +313,8 @@ cmd_hints () # hints of some more acute ways to utilize mxtx tools
   " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git pull --rebase --autostash" '' \
   "Use mxtx-rsh as replacement for ssh:" \
   " GIT_SSH_COMMAND='mxtx-rsh' git push {link}:{repopath} HEAD:new-main" \
-  "  (and on {link}: git update-ref refs/remotes/origin/main new-main)" ''
+  "  (and on {link}: git update-ref refs/remotes/origin/main new-main)" \
+  "  (slightly related: git update-ref refs/heads/main new-value old-value)" ''
 }
 
 cmd_source () # check source of given '$0' command
