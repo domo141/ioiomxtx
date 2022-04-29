@@ -7,7 +7,7 @@
 #	    All rights reserved
 #
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
-# Last modified: Sat 05 Jan 2019 15:28:39 +0200 too
+# Last modified: Fri 29 Apr 2022 16:44:59 +0300 too
 
 SHELL = /bin/sh
 
@@ -66,15 +66,24 @@ install.sh:
 		mmkdir $HOME/bin/
 		mmkdir $HOME/.local/share/mxtx/
 		shift
-		yesyes=true
+		imsg=true
 		echo strip "$@" >&2; strip "$@"
 		xcp () { test ! -d "$3" || set -- "$1" 2 "${3%/}/${1##*/}"
 			 cmp "$1" "$3" >/dev/null 2>&1 &&
-				echo "$1" and "$3" identical ||
+				echo "'$1' and '$3' identical" ||
 				cp -f -v "$1" "$3"; }
 		echo Copying:
+	elif test "$1" = YES=DIFF  # "undocumented" option...
+	then	imsg=true
+		xcp () {
+			test ! -d "$3" || set -- "$1" 2 "${3%/}/${1##*/}"
+			test -e "$3" || { echo "'$3': no file"; return; }
+			cmp "$1" "$3" >/dev/null 2>&1 ||
+				diff -u "$3" "$1" || :
+		}
+		echo Diffing...
 	else
-		yesyes=false
+		imsg=false
 		xcp () { echo '' "$@"; }
 		echo Would install:
 	fi
@@ -96,9 +105,9 @@ install.sh:
 	xcp ldpreload-moshclienthax.so to $HOME/.local/share/mxtx/
 	xcp ldpreload-tcp1271conn.so to $HOME/.local/share/mxtx/
 	echo
-	$yesyes || {
+	$imsg || {
 		echo Enter '' make install YES=YES '' to do so.
-		echo; exit
+		echo
 	}
 #	#eos
 	exit 1 # not reached

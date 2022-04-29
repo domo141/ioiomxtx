@@ -190,7 +190,7 @@ option to silence attempt to access some sites.)
 
 `mxtx-socksproxy` is installed as `$HOME/.local/share/mxtx/socksproxy`
 (for now). It takes mxtx *link* names as arguments. When run it reads
-($HOME/.local/share/mxtx/socksproxy/)`hosts-to-proxy` files on link
+($HOME/.local/share/mxtx/)`hosts-to-proxy` files on link
 targets to see what hosts are connectable behind every particular link
 ('', '/' and '.' resolve to local system -- for those connections that can
 be made directly by socksproxy). The tool `./addhost.sh` (installed to the
