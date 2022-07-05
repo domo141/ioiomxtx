@@ -8,7 +8,7 @@
 #           All rights reserved
 #
 # Created: Tue 24 Oct 2017 19:45:43 EEST too
-# Last modified: Thu 19 Nov 2020 21:09:12 +0200 too
+# Last modified: Tue 05 Jul 2022 16:37:24 +0300 too
 
 case ~ in '~') echo "'~' does not expand. old /bin/sh?" >&2; exit 1; esac
 
@@ -39,6 +39,7 @@ then printf >&2 %s\\n ''\
   '  --tar: use tar instead or rsync (workaround where rsync not available)'\
   '' hints: \
   "   read rsync(1) manual page for all these options (and caveats)"\
+  "   use '-L' to copy symlink referent (default is to skip symbolic links)"\
   "   use '-H' (with -a) to copy hardlinks (default is to copy file contents)"\
   "   use '-x' to restrict source (per entry) to one file system"\
   "   use '--inplace' (and retries) if copying does not complete in one go"\
