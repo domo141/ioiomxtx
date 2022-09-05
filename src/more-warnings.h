@@ -102,6 +102,10 @@
 #define discard_const_p(type, ptr) ((type *)((__INTPTR_TYPE__)(ptr)))
 #elif defined (__PTRDIFF_TYPE__) /* e.g. gcc 4.4.6 */
 #define discard_const_p(type, ptr) ((type *)((__PTRDIFF_TYPE__)(ptr)))
+#elif sizeof (void*) == sizeof (long)
+#define discard_const_p (type, ptr) ((type *)((long)(ptr)))
+#elif sizeof (void*) == sizeof (int)
+#define discard_const_p (type, ptr) ((type *)((int)(ptr)))
 #else
 #define discard_const_p(type, ptr) ((type *)(ptr))
 #endif
