@@ -179,10 +179,17 @@ cmd_ffox () # start firefox browser w/ mxtx socks5 tunneling
 	x_exec firefox -profile $profile_dir $prv -no-remote "$@" &
 }
 
-cmd_curl () # run curl via socks5 tunneling (with socksproxify like 2 above)
+cmd_curl () # run curl via socks5 tunneling (mxtx socks5 proxy like 2 above)
 {
 	set_i2u_ldpra
 	x_exec curl --socks5-hostname 127.1:1080 "$@"
+}
+
+cmd_aps5h () # run command, $all_proxy set as socks5h:... (mxtx socks5 proxy)
+{
+	set_i2u_ldpra
+	test $# = 0 && set -- env
+	all_proxy=socks5h://127.0.0.1:1080 exec "$@"
 }
 
 find_sftp_server () {
