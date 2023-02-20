@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Sat 02 Apr 2022 00:22:37 +0300 too
+ * Last modified: Mon 20 Feb 2023 21:33:11 +0200 too
  */
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
@@ -159,6 +159,7 @@ static void init(int argc, char * argv[])
             if (ll <= 0) { if (ll == 0) continue; else break; }
             ln++;
             while (isspace(*dp)) dp++;
+            if (*dp == '#') continue; // "comment" line
             char * ip = strpbrk(dp, " \t");
             if (ip == null) {
                 warn("%s:%d: no space separator", argv[i], ln);
