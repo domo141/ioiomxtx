@@ -9,7 +9,7 @@
 # Created: Wed 16 Aug 2017 21:09:05 EEST too
 # Last modified: Fri 29 Apr 2022 16:44:59 +0300 too
 
-SHELL = /bin/sh
+SHELL = /usr/bin/env bash
 
 BIN := mxtx mxtx-io mxtx-rshd mxtx-rsh mxtx-socksproxy mxtx-dgramtunneld
 BIN += ldpreload-i2ubind.so ldpreload-i2uconnect5.so
