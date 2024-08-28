@@ -17,21 +17,34 @@
 
 // hint: gcc -dM -E -xc /dev/null | grep -i gnuc
 // also: clang -dM -E -xc /dev/null | grep -i gnuc
-#if defined (__GNUC__)
+#if defined (__GNUC__) && defined (__STDC__)
+
+//#define WERROR 1 // uncomment or enter -DWERROR on command line/the includer
+
+#define DO_PRAGMA(x) _Pragma(#x)
+#if defined (WERROR) && WERROR
+#define PRAGMA_GCC_DIAG(w) DO_PRAGMA(GCC diagnostic error #w)
+#else
+#define PRAGMA_GCC_DIAG(w) DO_PRAGMA(GCC diagnostic warning #w)
+#endif
+
+#define PRAGMA_GCC_DIAG_E(w) DO_PRAGMA(GCC diagnostic error #w)
+#define PRAGMA_GCC_DIAG_W(w) DO_PRAGMA(GCC diagnostic warning #w)
+#define PRAGMA_GCC_DIAG_I(w) DO_PRAGMA(GCC diagnostic ignored #w)
 
 #if 0 // use of -Wpadded gets complicated, 32 vs 64 bit systems
-#pragma GCC diagnostic warning "-Wpadded"
+PRAGMA_GCC_DIAG_W (-Wpadded)
 #endif
 
 // to relax, change 'error' to 'warning' -- or even 'ignored'
-// selectively. use #pragma GCC diagnostic push/pop to change
-// the rules temporarily
+// selectively. use #pragma GCC diagnostic push/pop to change the
+// rules for a block of code in the source files including this.
 
-#pragma GCC diagnostic error "-Wall"
-#pragma GCC diagnostic error "-Wextra"
+PRAGMA_GCC_DIAG (-Wall)
+PRAGMA_GCC_DIAG (-Wextra)
 
 #if __GNUC__ >= 8 // impractically strict in gccs 5, 6 and 7
-#pragma GCC diagnostic error "-Wpedantic"
+PRAGMA_GCC_DIAG (-Wpedantic)
 #endif
 
 #if __GNUC__ >= 7 || defined (__clang__) && __clang_major__ >= 12
@@ -44,56 +57,61 @@
 #endif
 
 #ifndef __cplusplus
-#pragma GCC diagnostic error "-Wstrict-prototypes"
-#pragma GCC diagnostic error "-Wbad-function-cast"
-#pragma GCC diagnostic error "-Wold-style-definition"
-#pragma GCC diagnostic error "-Wmissing-prototypes"
-#pragma GCC diagnostic error "-Wnested-externs"
+PRAGMA_GCC_DIAG (-Wstrict-prototypes)
+PRAGMA_GCC_DIAG (-Wbad-function-cast)
+PRAGMA_GCC_DIAG (-Wold-style-definition)
+PRAGMA_GCC_DIAG (-Wmissing-prototypes)
+PRAGMA_GCC_DIAG (-Wnested-externs)
 #endif
 
 // -Wformat=2 ¡currently! (2020-11-11) equivalent of the following 4
-#pragma GCC diagnostic error "-Wformat"
-#pragma GCC diagnostic error "-Wformat-nonliteral"
-#pragma GCC diagnostic error "-Wformat-security"
-#pragma GCC diagnostic error "-Wformat-y2k"
+PRAGMA_GCC_DIAG (-Wformat)
+PRAGMA_GCC_DIAG (-Wformat-nonliteral)
+PRAGMA_GCC_DIAG (-Wformat-security)
+PRAGMA_GCC_DIAG (-Wformat-y2k)
 
-#pragma GCC diagnostic error "-Winit-self"
-#pragma GCC diagnostic error "-Wcast-align"
-#pragma GCC diagnostic error "-Wpointer-arith"
-#pragma GCC diagnostic error "-Wwrite-strings"
-#pragma GCC diagnostic error "-Wcast-qual"
-#pragma GCC diagnostic error "-Wshadow"
-#pragma GCC diagnostic error "-Wmissing-include-dirs"
-#pragma GCC diagnostic error "-Wundef"
+PRAGMA_GCC_DIAG (-Winit-self)
+PRAGMA_GCC_DIAG (-Wcast-align)
+PRAGMA_GCC_DIAG (-Wpointer-arith)
+PRAGMA_GCC_DIAG (-Wwrite-strings)
+PRAGMA_GCC_DIAG (-Wcast-qual)
+PRAGMA_GCC_DIAG (-Wshadow)
+PRAGMA_GCC_DIAG (-Wmissing-include-dirs)
+PRAGMA_GCC_DIAG (-Wundef)
 
 #ifndef __clang__ // XXX revisit -- tried with clang 3.8.0
-#pragma GCC diagnostic error "-Wlogical-op"
+PRAGMA_GCC_DIAG (-Wlogical-op)
 #endif
 
 #ifndef __cplusplus // supported by c++ compiler but perhaps not worth having
-#pragma GCC diagnostic error "-Waggregate-return"
+PRAGMA_GCC_DIAG (-Waggregate-return)
 #endif
 
-#pragma GCC diagnostic error "-Wmissing-declarations"
-#pragma GCC diagnostic error "-Wredundant-decls"
-#pragma GCC diagnostic error "-Winline"
-#pragma GCC diagnostic error "-Wvla"
-#pragma GCC diagnostic error "-Woverlength-strings"
-#pragma GCC diagnostic error "-Wuninitialized"
+PRAGMA_GCC_DIAG (-Wmissing-declarations)
+PRAGMA_GCC_DIAG (-Wredundant-decls)
+PRAGMA_GCC_DIAG (-Winline)
+PRAGMA_GCC_DIAG (-Wvla)
+PRAGMA_GCC_DIAG (-Woverlength-strings)
+PRAGMA_GCC_DIAG (-Wuninitialized)
 
-//ragma GCC diagnostic error "-Wfloat-equal"
-//ragma GCC diagnostic error "-Werror"
-//ragma GCC diagnostic error "-Wconversion"
+//PRAGMA_GCC_DIAG (-Wfloat-equal)
+//PRAGMA_GCC_DIAG (-Wconversion)
 
 // avoiding known problems (turning some errors set above to warnings)...
 #if __GNUC__ == 4
 #ifndef __clang__
-#pragma GCC diagnostic warning "-Winline" // gcc 4.4.6 ...
-#pragma GCC diagnostic warning "-Wuninitialized" // gcc 4.4.6, 4.8.5 ...
+PRAGMA_GCC_DIAG_W (-Winline) // gcc 4.4.6 ...
+PRAGMA_GCC_DIAG_W (-Wuninitialized) // gcc 4.4.6, 4.8.5 ...
 #endif
 #endif
 
-#endif /* defined (__GNUC__) */
+#undef PRAGMA_GCC_DIAG_I
+#undef PRAGMA_GCC_DIAG_W
+#undef PRAGMA_GCC_DIAG_E
+#undef PRAGMA_GCC_DIAG
+#undef DO_PRAGMA
+
+#endif /* defined (__GNUC__) && defined (__STDC__) */
 
 /* name and interface from talloc.c */
 #ifndef discard_const_p // probably never defined, but...
