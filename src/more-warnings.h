@@ -9,7 +9,9 @@
 // for older glibc's on linux (< 2.19 -- e.g. rhel7 uses 2.17...)
 #define _BSD_SOURCE 1
 #define _SVID_SOURCE 1
+#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
+#endif
 #define _ATFILE_SOURCE 1
 // more extensions (less portability?)
 //#define _GNU_SOURCE 1
