@@ -2,32 +2,21 @@
 
 # mxtx acute program usage
 
-case ~ in '~') echo "'~' does not expand. old /bin/sh?" >&2; exit 1; esac
-
 case ${BASH_VERSION-} in *.*) set -o posix; shopt -s xpg_echo; esac
 case ${ZSH_VERSION-} in *.*) emulate ksh; esac
 
-set -euf
-#set -x # or enter /bin/sh -x ... on command line.
+set -euf  # hint: (z|ba|da|'')sh -x thisfile [args] to trace execution
 
-# LANG=C LC_ALL=C; export LANG LC_ALL
-# PATH='/sbin:/usr/sbin:/bin:/usr/bin'; export PATH
-
-warn () { printf '%s\n' "$*"; } >&2
-die () { exec >&2; printf '%s\n' "$*"; exit 1; }
+die () { printf '%s\n' '' "$@" ''; exit 1; } >&2
 
 x () { printf '+ %s\n' "$*" >&2; "$@"; }
 x_env () { printf '+ %s\n' "$*" >&2; env "$@"; }
 x_eval () { printf '+ %s\n' "$*" >&2; eval "$*"; }
-x_exec () { printf '+ %s\n' "$*" >&2; exec "$@"; die "exec '$*' failed"; }
+x_exec () { printf '+ %s\n' "$*" >&2; exec "$@"; exit not reached; }
 
 saved_IFS=$IFS; readonly saved_IFS
 
-usage () {
-	printf '\nUsage: %s %s %s\n\n' "$0" "$cmd" "$1"
-	test $# = 1 || { shift; printf '  %s\n' "$@"; echo; }
-	exit 1;
-} >&2
+usage () { printf %s\\n '' "Usage: ${0##*/} $cmd $@" ''; exit 1; } >&2
 
 #gdbrun='gdb -ex run --args'
 
@@ -76,7 +65,11 @@ _mxtxpath () {
 	printf '%s\n' "$MXTX_LINK:$p"
 }
 
-cmd_path () # show file/dir paths -- most useful in mxtx-rsh shell
+cmds=
+
+cmds=$cmds'
+cmd_path  show file/dir paths -- most useful in mxtx-rsh shell'
+cmd_path ()
 {
 	if test $# = 0
 	then
@@ -103,10 +96,12 @@ cmd_path () # show file/dir paths -- most useful in mxtx-rsh shell
 	echo
 }
 
-cmd_sshmxtx () # create default forward tunnel using ssh
+cmds=$cmds'
+cmd_sshmxtx  create default forward mxtx tunnel using ssh'
+cmd_sshmxtx ()
 {
-	test $# -ge 2 || usage 'link [user@]host [env=val [env...]' \
-			"'env's, if any, will be set in host"
+	test $# -ge 2 || usage 'link [user@]host [env=val [env...]' '' \
+			"  'env's, if any, will be set in host"
 	link=$1 remote=$2 shift 2;
 	for arg; do
 		# perhaps too tight here...
@@ -116,7 +111,9 @@ cmd_sshmxtx () # create default forward tunnel using ssh
 	x_exec ioio.pl / .mxtx -c"$link" / ssh "$remote" env $* .mxtx -s
 }
 
-cmd_revmxtx () # create "reverse" tunnel
+cmds=$cmds'
+cmd_revmxtx  create "reverse" mxtx tunnel'
+cmd_revmxtx ()
 {
 	test $# -ge 2 || usage 'link "back"link'
 	x_exec ioio.pl mxtx-rsh "$1" .mxtx -c"'$2'" /// .mxtx -s~
@@ -131,12 +128,14 @@ set_i2u_ldpra ()
 
 }
 
-cmd_chromie () # start chromium / chrome browser w/ mxtx socks5 tunneling
+cmds=$cmds'
+cmd_chromie  start chromium / chrome browser w/ mxtx socks5 tunneling'
+cmd_chromie ()
 {
 	case ${1-} in h) ic=--incognito
 		   ;; v) ic=
 		   ;; *) usage "('h'|'v') [link|url] ..." \
-			"'h' -- incognito" "'v' -- not"
+			"  'h' -- incognito" "  'v' -- not"
 	esac
 	shift
 	set_chromie
@@ -151,12 +150,14 @@ cmd_chromie () # start chromium / chrome browser w/ mxtx socks5 tunneling
 			$ic --proxy-server=socks5://127.1:1080 "$@"
 }
 
-cmd_ffox () # start firefox browser w/ mxtx socks5 tunneling
+cmds=$cmds'
+cmd_ffox  start firefox browser w/ mxtx socks5 tunneling'
+cmd_ffox ()
 {
 	case ${1-} in h) prv=--private
 		   ;; v) prv=
 		   ;; *) usage "('h'|'v') [link|url] ..." \
-			"'h' -- private" "'v' -- not"
+			"  'h' -- private" "  'v' -- not"
 	esac
 	shift
 	case $HOME in *["$IFS"]*) die "Whitespace in '$HOME'"; esac
@@ -179,13 +180,17 @@ cmd_ffox () # start firefox browser w/ mxtx socks5 tunneling
 	x_exec firefox -profile $profile_dir $prv -no-remote "$@" &
 }
 
-cmd_curl () # run curl via socks5 tunneling (mxtx socks5 proxy like 2 above)
+cmds=$cmds'
+cmd_curl  run curl via socks5 tunneling (mxtx socks5 proxy like 2 above)'
+cmd_curl ()
 {
 	set_i2u_ldpra
 	x_exec curl --socks5-hostname 127.1:1080 "$@"
 }
 
-cmd_aps5h () # run command, $all_proxy set as socks5h:... (mxtx socks5 proxy)
+cmds=$cmds'
+cmd_aps5h  run command, $all_proxy set as socks5h:... (mxtx socks5 proxy)'
+cmd_aps5h ()
 {
 	set_i2u_ldpra
 	test $# = 0 && set -- env
@@ -203,16 +208,18 @@ find_sftp_server () {
 	die "Cannot find sftp-server on local host"
 }
 
-cmd_sshfs () # sshfs mount using mxtx tunnel
+cmds=$cmds'
+cmd_sshfs  sshfs mount using mxtx tunnel'
+cmd_sshfs ()
 {
 	# versatility of sshlessfs options cannot be achieved w/ just sh code
 	# in addition to sshfs options read-only sftp-server option would be ni
-	test $# -ge 2 || usage 'path mountpoint [sshfs options]' \
-		"either 'path' or 'mountpoint' is to have ':' but not both" \
-		"'reverse' mount (i.e. ':' in mountpoint) may have some security implications"
-	case $1 in *:*) case $2 in *:*) die "2 link:... paths!"; esac; esac
+	test $# -ge 2 || usage 'path mountpoint [sshfs options]' '' \
+		"  either 'path' or 'mountpoint' is to have ':' but not both."\
+		"  'reverse' mount (i.e. ':' in mountpoint) may have some security implications"
 	p=$1 m=$2; shift 2
 	case $m in *:*)
+		case $p in *:*) die "2 link:... paths!"; esac
 		eval la=\$$# # last arg
 		# drop last arg
 		a=$1; shift; for arg; do set -- "$@" "$a"; a=$arg; shift; done
@@ -244,17 +251,30 @@ cmd_sshfs () # sshfs mount using mxtx tunnel
 		"${p%%:*}": env PATH=$sfs_dirs sftp-server
 }
 
-cmd_sftp () # like sftp, but via mxtx tunnel
+cmds=$cmds'
+cmd_sftp  like sftp, but via mxtx tunnel'
+cmd_sftp ()
 {
 	export MXTX_APU_WRAPPER=sftp
 	x_exec sftp -S "$0" "$@"
 }
 
-cmd_tcp1271c () # tunnel localhost connection to mxtx endpoint
+cmds=$cmds"
+cmd_wgitsshc  run command with GIT_SSH_COMMAND='mxtx-rsh {link} . ssh'"
+cmd_wgitsshc ()
 {
-	test $# -gt 1 || usage 'mapping command [args]' \
-		'mapping format: port/dest[/dport][:port/dest[/dport][:...]]' \
-		'example: mxtx-apu.sh tcp1271c 5901/w/5900 vncwiever :1'
+	test $# = 0 && usage 'link (git)command [args]'
+	l=$1; shift
+	GIT_SSH_COMMAND="mxtx-rsh '$l' . ssh" exec "$@"
+}
+
+cmds=$cmds'
+cmd_tcp1271c  tunnel localhost connection to mxtx endpoint'
+cmd_tcp1271c ()
+{
+	test $# -gt 1 || usage 'mapping command [args]' '' \
+		'  mapping format: port/dest[/dport][:port/dest[/dport][:...]]' \
+		'  example: mxtx-apu.sh tcp1271c 5901/w/5900 vncwiever :1'
 
 	so=$HOME/.local/share/mxtx/ldpreload-tcp1271conn.so
 	export LD_PRELOAD=$so${LD_PRELOAD:+:$LD_PRELOAD}
@@ -264,15 +284,18 @@ cmd_tcp1271c () # tunnel localhost connection to mxtx endpoint
 	exit not reached
 }
 
-
-cmd_emacs () # emacs, with loaded mxtx.el -- a bit faster if first arg is '!'
+cmds=$cmds"
+cmd_emacs  emacs, with loaded mxtx.el -- a bit faster if first arg is '!'"
+cmd_emacs ()
 {
 	test "${1-}" != '!' || { shift; set -- --eval '(mxtx!)' "$@"; }
 	x_exec emacs -l $HOME/.local/share/mxtx/mxtx.el "$@"
 }
 
-# remove leading '_' for xpra experiments
-_cmd_xpra () # xpra support (wip)
+# uncomment for xpra experiments
+#cmds=$cmds'
+#cmd_xpra  xpra support (wip)'
+cmd_xpra ()
 {
 	test $# != 0 || usage 'command [link:disp] [options]'
 	case $1 in initenv | showconfig | list ) x_exec xpra "$@" ; esac
@@ -282,7 +305,9 @@ _cmd_xpra () # xpra support (wip)
 	x_exec xpra --ssh="$0" "$xcmd" ssh:"$disp" "$@"
 }
 
-cmd_vsfa () # wrap open() and stat() syscalls for opportunistic remote access
+cmds=$cmds'
+cmd_vsfa  wrap open() and stat() syscalls for opportunistic remote access'
+cmd_vsfa ()
 {
 	test $# != 0 || usage 'command [args]'
 	so=$HOME/.local/share/mxtx/ldpreload-vsfa.so
@@ -290,7 +315,9 @@ cmd_vsfa () # wrap open() and stat() syscalls for opportunistic remote access
 	exec "$@"
 }
 
-cmd_ping () # 'ping' (including time to execute `date` on destination)
+cmds=$cmds"
+cmd_ping  'ping' (including time to execute \`date\` on destination)"
+cmd_ping ()
 {
 	test $# = 0 && usage 'link'
 	export TIME='elapsed: %e s'
@@ -300,7 +327,9 @@ cmd_ping () # 'ping' (including time to execute `date` on destination)
 	done
 }
 
-cmd_exit () # exit all .mxtx processes running on this system (dry-run w/o '!')
+cmds=$cmds"
+cmd_exit  exit all .mxtx processes running on this system (dry-run w/o '!')"
+cmd_exit ()
 {
 	#pgrep -a '[.]mxtx'   # -a option not in older pgreps
 	ps x | grep '[.]mxtx' # if we also had -e, this would be unnecessary
@@ -312,7 +341,9 @@ cmd_exit () # exit all .mxtx processes running on this system (dry-run w/o '!')
 	echo "Add '!' to the command line to exit the processes shown above"
 }
 
-cmd_hints () # hints of some more acute ways to utilize mxtx tools
+cmds=$cmds'
+cmd_hints  hints of some more acute ways to utilize mxtx tools'
+cmd_hints ()
 {
 	printf '%s\n' '' \
   "Use mxtx-rsh as proxy:" \
@@ -325,15 +356,6 @@ cmd_hints () # hints of some more acute ways to utilize mxtx tools
   "  (slightly related: git update-ref refs/heads/main new-value old-value)" ''
 }
 
-cmd_source () # check source of given '$0' command
-{
-	set +x
-	test "${1-}" || usage 'cmd-prefix'
-	echo
-	exec sed -n -e "/^\(cmd_\)\?$1.*(/,/^}/p" "$0"
-}
-
-
 #case ${1-} in --sudo) shift; exec sudo "$0" "$@"; die 'not reached'; esac
 
 case ${1-} in -x) setx=true; shift ;; *) setx=false ;; esac
@@ -343,47 +365,71 @@ case ${1-} in -e) cmd=$2; readonly cmd; shift 2; cmd_"$cmd" "$@"; exit ;; esac
 
 # ---
 
-case ${1-} in '')
+IFS='
+'
+test $# = 0 && {
 	echo mxtx acute program use
 	echo
-	echo Usage: $0 '<command> [args]'
+	echo Usage: $0 '{command} [args]'
 	echo
-	echo ${0##*/} commands available:
+	echo Commands of ${0##*/} "('.' to list, '.. cmd(pfx)' to view source):"
 	echo
-	sed -n '/^cmd_[a-z0-9_]/ { s/cmd_/ /; s/ () [ #]*/                   /
-		s/$0/'"${0##*/}"'/g; s/\(.\{11\}\) */\1/p; }' "$0"
+	set -- $cmds
+	rows=$((($# + 4) / 5))
+	cols=$((($# + ($rows - 1)) / $rows))
+	c=0; while test $c -lt $rows; do eval r$c="'  '"; c=$((c + 1)); done
+	c=0; i=0
+	for arg
+	do arg=${arg%% *}; arg=${arg#cmd_}
+	   test $i -lt $(($# - rows)) && {
+	      arg=$arg'          '; arg=${arg%${arg#???????????}}; }
+	   eval r$c='$r'$c'$arg'
+	   i=$((i + 1)); c=$((i % rows))
+	done
+	c=0; while test $c -lt $rows; do eval echo \$r$c; c=$((c + 1)); done
 	echo
 	echo Command can be abbreviated to any unambiguous prefix.
 	echo
 	exit 0
-esac
-
+}
 cm=$1; shift
 
-# case $cm in
-# 	d) cm=diff ;;
-# esac
+case $#/$cm
+in 0/.)
+	set -- $cmds
+	IFS=' '
+	echo
+	for cmd
+	do	set -- $cmd; cmd=${1#cmd_}; shift
+		printf ' %-9s  %s\n' $cmd "$*"
+	done
+	echo
+	exit
+;; 1/..)
+	set +x
+	# $1 not sanitized but that should not be too much of a problem...
+	exec sed -n "/^cmd_$1/,/^}/p; \${g;p}" "$0"
+;; */.) cm=$1; shift
+;; */..) cmd=..; usage cmd-prefix
+
+#;; */d) cm=diff
+esac
 
 cc= cp=
-for m in `LC_ALL=C exec sed -n 's/^cmd_\([a-z0-9_]*\) (.*/\1/p' "$0"`
+for m in $cmds
 do
+	m=${m#cmd_}; m=${m%% *}
 	case $m in
 		$cm) cp= cc=1 cmd=$cm; break ;;
 		$cm*) cp=$cc; cc="$m $cc"; cmd=$m ;;
 	esac
 done
+IFS=$saved_IFS
 
-test   "$cc" || { echo $0: $cm -- command not found.; exit 1; }
-test ! "$cp" || { echo $0: $cm -- ambiguous command: matches $cc; exit 1; }
+test "$cc" || die "$0: $cm -- command not found."
+test "$cp" && die "$0: $cm -- ambiguous command: matches $cc"
+
 unset cc cp cm
-readonly cmd
-$setx && { unset setx; set -x; } || unset setx
-cmd_$cmd "$@"
-
-# Local variables:
-# mode: shell-script
-# sh-basic-offset: 8
-# sh-indentation: 8
-# tab-width: 8
-# End:
-# vi: set sw=8 ts=8
+#set -x
+cmd'_'$cmd "$@"
+exit
