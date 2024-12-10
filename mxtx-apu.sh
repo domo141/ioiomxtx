@@ -316,7 +316,7 @@ cmd_vsfa ()
 }
 
 cmds=$cmds"
-cmd_ping  'ping' (including time to execute \`date\` on destination)"
+cmd_ping  'ping' "'(including time to execute `date` on destination)'
 cmd_ping ()
 {
 	test $# = 0 && usage 'link'
@@ -346,14 +346,18 @@ cmd_hints  hints of some more acute ways to utilize mxtx tools'
 cmd_hints ()
 {
 	printf '%s\n' '' \
-  "Use mxtx-rsh as proxy:" \
+  "GIT_SSH_COMMAND - Use mxtx-rsh as proxy:" \
   " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git clone git@ror:{repo}" \
   " GIT_SSH_COMMAND='mxtx-rsh {link} . ssh' git pull --rebase --autostash" '' \
-  "Use mxtx-rsh as replacement for ssh:" \
+  "GIT_SSH_COMMAND - Use mxtx-rsh as replacement for ssh:" \
   " GIT_SSH_COMMAND='mxtx-rsh' git push {link}:{repopath} HEAD:new-main" \
   "  (and on {link}: git update-ref refs/remotes/origin/main new-main)" \
   "  (\or no remote: git rebase new-main && git branch -d new-main)" \
-  "  (slightly related: git update-ref refs/heads/main new-value old-value)" ''
+  "  (slightly related: git update-ref refs/heads/main new-value old-value)" ''\
+  'Try X11 forwarding for one (1) client:' \
+  " mxtx-io // socat [-x] unix-connect:/tmp/.X11-unix/X0 stdio // mxtx-rsh {link} socat unix-listen:/tmp/.X11-unix/X5 stdio" \
+  " (then, on {link} (on separate cli): DISPLAY=:5 xeyes" \
+  "  it may take some time to see it -- and ~10x longer with xterm(1))" ''
 }
 
 #case ${1-} in --sudo) shift; exec sudo "$0" "$@"; die 'not reached'; esac
@@ -418,10 +422,10 @@ esac
 cc= cp=
 for m in $cmds
 do
-	m=${m#cmd_}; m=${m%% *}
+	m=${m%% *}; m=${m#cmd_}
 	case $m in
 		$cm) cp= cc=1 cmd=$cm; break ;;
-		$cm*) cp=$cc; cc="$m $cc"; cmd=$m ;;
+		$cm*) cp=$cc; cc=$m${cc:+, $cc}; cmd=$m
 	esac
 done
 IFS=$saved_IFS
