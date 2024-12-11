@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # -*- mode: shell-script; sh-basic-offset: 8; tab-width: 8 -*-
 # $ mxtx-cp.sh $
 #
