@@ -2,7 +2,7 @@
 # -*- mode: cperl; cperl-indent-level: 4 -*-
 
 # copy this file as index-src.pl, replace your links below in $USER_LINKS
-# (perhaps edit $HEAD and $TAIL), and then do $ perl index-src.pl
+# and tune $TAIL (perhaps edit $HEAD), and then do $ perl index-src.pl
 
 use 5.8.1;
 use strict;
@@ -23,29 +23,53 @@ http://row3col1.example.com/ row3 col1
 
 EOF
 
+my $TAIL = <<"EOF";
+</tr></table>
+
+<script>
+function klik(n) {
+    var upx = document.querySelector('#upx' + n);
+    var num = document.querySelector('#imp' + n);
+    window.open(upx.innerText.trim() + num.value.trim(), "_blank")
+    return false
+}
+</script>
+<table><tr><td>
+<hr/>
+<form onsubmit="return klik('1')"
+  <label id="upx1">http://sample-one/</label>
+  <input id="imp1" size="8" required="true" value="" />
+</form>
+<hr/>
+<form onsubmit="return klik('2')"
+  <label id="upx2">https://sample-two/browse/</label>
+  <input id="imp2" size="10" required="true" value="" />
+</form>
+<hr/>
+</td><tr/></table>
+
+</body></html>
+EOF
+
 my $HEAD = <<"EOF";
 <!doctype html>
 <html><head><title>index html quite useful</title>
 <!--
-	See $0 for editing content
+	See $0 for editing content (USER_LINKS, HEAD & TAIL)
 -->
 <style type="text/css">
-body { background-color: #000; color #888; }
+body { background-color: #000; color: #888; }
 ul,li { margin-left: 0.5em; padding: 0; }
 table { border-spacing: 30px 5px; }
-td { font-size: 400%; }
+td { font-size: 400%; color: #858; }
+form { font-size: 40%; }
+input { background-color: #000; color: #fff; }
 a:link { color: #88f; }
 a:visited { color: #88a; }
 </style>
 </head><body>
 <table><tr>
 EOF
-
-my $TAIL = <<"EOF";
-</tr></table>
-</body></html>
-EOF
-
 
 open O, '>', 'index.wip' or die;
 
@@ -70,7 +94,7 @@ close O;
 
 if (-f 'index.html') {
    system qw/cmp -s index.wip index.html/;
-   unlink('index.wip'), exit unless $?;
+   print("No Change\n"), unlink('index.wip'), exit unless $?;
 
    my $d = 1;
    my $p = '';
@@ -78,10 +102,9 @@ if (-f 'index.html') {
        open A, '<', 'index.ar' or die $!;
        read A, $p, 64;
        # should check "!<arch>\n"
-       $p =~ /index-(\d+)[.]html/;
-       $d = $1 + 1;
+       $d = ($p =~ /index-0+(\d+)[.]html/)? $1 + 1: 1;
    }
-   print "Storing previous 'index.html' to an ar(5) archive\n";
+   print "Storing previous 'index.html' (#$d) to an ar(5) archive\n";
    print ": use; ar -vt index.ar ;: to see contents there\n";
    open O, '>', 'index.ar.wip' or die $!;
    print O "!<arch>\n";
@@ -101,8 +124,8 @@ if (-f 'index.html') {
    }
    close O;
    rename 'index.ar.wip', 'index.ar';
+   print "...and renaming prev index.html as index.prev\n";
+   rename 'index.html', 'index.prev';
 }
 
-# old backup code, one "level" left...
-rename 'index.html',   'index.prev';
-rename 'index.wip',    'index.html';
+rename 'index.wip', 'index.html';
