@@ -12,14 +12,18 @@ use warnings;
 
 my $USER_LINKS = <<'EOF';
 
-http://row1col1.example.com/ row1 col1
-http://row1col2.example.com/ row1 col2
-http://row1col3.example.com/ row1 col3
+http://tbl1col1.example.com/ tbl1 col1
+http://tbl1col2.example.com/ tbl1 col2
+http://tbl1col3.example.com/ tbl1 col3
 
-http://row2col1.example.com/ row2 col1
-http://row2col2.example.com/ row2 col2
+http://tbl2col1.example.com/ tbl2 col-1
+http://tbl2col2.example.com/ tbl2 col-2
 
-http://row3col1.example.com/ row3 col1
+http://tbl3col1.example.com/ tbl#3 col 1
+
+= ahdr:
+http://tbl4col2.example.com/ tbl4 col 2
+
 
 EOF
 
@@ -37,7 +41,7 @@ function klik(n) {
 <table><tr><td>
 <hr/>
 <form onsubmit="return klik('1')"
-  <label id="upx1">http://sample-one/</label>
+  <label id="upx1">http://sample-one:8080/</label>
   <input id="imp1" size="8" required="true" value="" />
 </form>
 <hr/>
@@ -83,7 +87,11 @@ sub row($_) {
     foreach (split /\n/, $_[0]) {
 	next if /^\s*#/;
 	/^\s*(\S+)\s+(\S.*)/ or next;
-	print O qq'<td><a href="$1" target=_blank>$2</a></td>\n';
+	if ($1 eq '=') {
+	    print O qq'<td><b>$2</b></td>\n'
+	} else {
+	    print O qq'<td><a href="$1" target=_blank>$2</a></td>\n'
+	}
     }
 }
 row (shift @rows);
