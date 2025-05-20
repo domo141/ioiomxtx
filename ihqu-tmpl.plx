@@ -102,7 +102,7 @@ if (-f 'index.html') {
        open A, '<', 'index.ar' or die $!;
        read A, $p, 64;
        # should check "!<arch>\n"
-       $d = ($p =~ /index-0+(\d+)[.]html/)? $1 + 1: 1;
+       $d = ($p =~ /index-0*(\d+)[.]html/)? $1 + 1: 1;
    }
    print "Storing previous 'index.html' (#$d) to an ar(5) archive\n";
    print ": use; ar -vt index.ar ;: to see contents there\n";
