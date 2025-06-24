@@ -289,6 +289,7 @@ cmd_emacs  emacs, with loaded mxtx.el -- a bit faster if first arg is '!'"
 cmd_emacs ()
 {
 	test "${1-}" != '!' || { shift; set -- --eval '(mxtx!)' "$@"; }
+	echo fyi: ///mxtx:{r}: >&2
 	x_exec emacs -l $HOME/.local/share/mxtx/mxtx.el "$@"
 }
 

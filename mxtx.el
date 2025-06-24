@@ -7,7 +7,7 @@
 ;;;	    All rights reserved
 ;;;
 ;;; Created: Tue 05 Sep 2017 21:50:02 EEST too
-;;; Last modified: Fri 08 Dec 2017 21:33:08 +0200 too
+;;; Last modified: Tue 24 Jun 2025 18:57:10 +0300 too
 
 ;;; This particular file is licenced under GPL v3 (and probably later)...
 
@@ -27,7 +27,8 @@
     (tramp-remote-shell-login   ("-l"))
     (tramp-remote-shell-args    ("-c"))
     (tramp-copy-program         "rsync")
-    (tramp-copy-args            (("-t" "%k") ("-r") ("-e" "mxtx-io")))
+    (tramp-copy-args            (("-t" "%k") ("-p") ("-r") ("-s") ("-I")
+				 ("-e" "mxtx-io")))
     (tramp-copy-keep-date       t)
     ;;(tramp-copy-keep-tmpfile    t)
     (tramp-copy-recursive       t)))
@@ -46,4 +47,10 @@
   (setq vc-ignore-dir-regexp
 	(format "\\(%s\\)\\|\\(%s\\)"
 		vc-ignore-dir-regexp tramp-file-name-regexp)
-	remote-file-name-inhibit-cache nil))
+	remote-file-name-inhibit-cache nil
+	;; from coredumped.dev/2025/06/18/making-tramp-go-brrrr./
+	;; some introduced in emacs 29.+ so no-op in older...
+	remote-file-name-inhibit-locks t
+	tramp-use-scp-direct-remote-copying t
+	remote-file-name-inhibit-auto-save-visited t
+	))
