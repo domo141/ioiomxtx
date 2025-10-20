@@ -24,7 +24,7 @@
  *          All rights reserved
  *
  * Created: Sun 20 Aug 2017 22:07:17 EEST too
- * Last modified: Mon 20 Feb 2023 21:33:11 +0200 too
+ * Last modified: Mon 20 Oct 2025 19:57:50 +0300 too
  */
 
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
@@ -71,6 +71,7 @@ const char * _prg_ident = "mxtx-socksproxy: ";
 static struct {
     char * network;
     char pidbuf[16];
+    int  iport; // zero if unix-bound
     pid_t ppid; // note: known -Wpadded warning... //
     struct timeval stv;
     sigjmp_buf restart_env;
@@ -111,11 +112,39 @@ static int find_dest(const char * host, int hostlen,
     return 0;
 }
 
+static
+int xbind_listen_inet_socket(struct sockaddr_in * addr, int type)
+{
+    int sd = xsocket(AF_INET, type);
+    int one = 1;
+    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
+
+    if (bind(sd, (struct sockaddr *)addr, sizeof (struct sockaddr_in)) < 0) {
+        if (errno == EADDRINUSE)
+            die("bind: address already in use\n");
+        die("bind:");
+    }
+    if (type == SOCK_STREAM && listen(sd, 5) < 0)
+        die("listen:");
+
+    return sd;
+}
+
 static void init(int argc, char * argv[])
 {
+    if (argc > 1 && argv[1][0] == ':') {
+        int v = atoi(argv[1] + 1);
+        if (v >= 1024 && v < 65536) {
+            G.iport = v;
+            argv[1] = argv[0];
+            argv++; argc--;
+        }
+    }
     if (argc < 2)
-        die("\nUsage: %s link [link...]\n\n"
-            "  '0' is good default link\n\n", argv[0]);
+        die("\nUsage: %s [:port] link [link...]\n"
+            "\n if first arg is :1024 <= port < :65536, 127.0.0.1:port is bound"
+            "\n otherwise unix socket is bound and ld_preload is often needed"
+            "\n\n '0' is one good default link\n", argv[0]);
 #define INITIAL_ALLOC_SIZE 262144 // expect mmap, let's see what realloc does
     G.network = malloc(INITIAL_ALLOC_SIZE);
     if (G.network == null) die("out of memory");
@@ -206,23 +235,38 @@ static void init(int argc, char * argv[])
     (void)find_dest("", 0, null, null);
 #endif
 
-    struct sockaddr_un saddr;
+    if (G.iport == 0) {
+        struct sockaddr_un saddr;
 #if defined(__linux__) && __linux__
-    fill_sockaddr_un(&saddr, "%c/tmp/user-%d/un-s-1080", 0, getuid());
+        // use abstract socket address //
+        fill_sockaddr_un(&saddr, "%c/tmp/user-%d/un-s-1080", 0, getuid());
 #else
-    char * xdgrd = getenv("XDG_RUNTIME_DIR");
-    if (xdgrd)
-        fill_sockaddr_un(&saddr, "%s/un-s-1080", xdgrd);
-    else {
-        uid_t uid = getuid();
-        char dir[64];
-        (void)snprintf(dir, sizeof dir, "/tmp/user-%d", uid);
-        (void)mkdir(dir, 0700);
-        fill_sockaddr_un(&saddr, "/tmp/user-%d/un-s-1080", uid);
-    }
+        char * xdgrd = getenv("XDG_RUNTIME_DIR");
+        if (xdgrd)
+            fill_sockaddr_un(&saddr, "%s/un-s-1080", xdgrd);
+        else {
+            uid_t uid = getuid();
+            char dir[64];
+            (void)snprintf(dir, sizeof dir, "/tmp/user-%d", uid);
+            (void)mkdir(dir, 0700);
+            fill_sockaddr_un(&saddr, "/tmp/user-%d/un-s-1080", uid);
+        }
 #endif
-    int sd = xbind_listen_unix_socket(&saddr, SOCK_STREAM);
-    xmovefd(sd, 3);
+        int sd = xbind_listen_unix_socket(&saddr, SOCK_STREAM);
+        xmovefd(sd, 3);
+    }
+    else {
+#define IADDR(a,b,c,d) ((in_addr_t)(a + (b << 8) + (c << 16) + (d << 24)))
+#define IPORT(v) ((in_port_t)(((v) >> 8) | ((v) << 8)))
+        struct sockaddr_in iaddr = {
+            .sin_family = AF_INET,
+            .sin_port = IPORT(G.iport),
+            .sin_addr = { IADDR(127,0,0,1) }
+        };
+        int sd = xbind_listen_inet_socket(&iaddr, SOCK_STREAM);
+        warn("Listening 127.0.0.1:%d - any user may connect.", G.iport);
+        xmovefd(sd, 3);
+    }
 }
 
 static void restart_sighandler(int sig)
@@ -269,7 +313,7 @@ int main(int argc, char * argv[])
         int sd = accept(3, null, 0);
         if (sd < 0 && errno == EINTR)
             continue;
-        if (! checkpeerid(sd)) {
+        if (G.iport == 0 && ! checkpeerid(sd)) {
             close(sd);
             continue;
         }
@@ -337,6 +381,16 @@ static int xinet_connect(const char * addr, int iport /*, bool nonblock */)
 
 static void may_serve_index_file_request(const char * host, char * rbuf);
 
+/* copy, return endp, caller knows it doesn't overflow nor overlap
+ * return pointer one over the trailing '\0'...
+ * (replaces use of p += sprintf(p, "%s", buf + 5) + 1; */
+static char * xxscpy(char * dst, const char * src)
+{
+    int l = strlen(src) + 1;
+    memcpy(dst, src, l);
+    return dst + l;
+}
+
 static void start(void)
 {
     char buf[512];
@@ -388,8 +442,13 @@ static void start(void)
             may_serve_index_file_request(buf + 5, p);
             const char * addr;
             int al = find_dest(buf + 5, hlen, &net, &addr);
+#if 0
             if (al) p += sprintf(p, "%s", addr) + 1; // p was buf + 313
             else p += sprintf(p, "%s", buf + 5) + 1; // for warn() below
+#else
+            if (al) p = xxscpy(p, addr); // p was buf + 313
+            else p = xxscpy(p, buf + 5); // for warn() below
+#endif
         }
         else if (buf[3] == 0x01) {  // ipv4 address
             warn("Sorry, forgot to complete ipv4 address type support\n"
@@ -416,6 +475,15 @@ static void start(void)
     }
     else if (buf[0] == 4) {
         die("Socks4 support to be implemented");
+    }
+    else if (buf[0] == 'C') {  // unexpected C(ONNECT?) request
+        die("Unexpected 'C' as socks5 proxy version (https CONNECT?)");
+    }
+    else if (buf[0] == 'G') {  // unexpected G(ET?) request
+        die("Unexpected 'G' as socks5 proxy version (http GET?)");
+    }
+    else if (buf[0] == 22) {  // unexpected maybe https request
+        die("Unexpected '22' as socks5 proxy version (https - tls handshake?)");
     }
     else die ("Unknown socks version (%d) request", buf[0]);
     alarm(0);
