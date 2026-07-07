@@ -15,7 +15,7 @@
  *          All rights reserved
  *
  * Created: Sat 02 Sep 2017 18:42:37 EEST too
- * Last modified: Sat 02 Apr 2022 00:22:18 +0300 too
+ * Last modified: Tue 07 Jul 2026 18:26:54 +0300 too
  */
 
 #include "more-warnings.h"
@@ -35,12 +35,11 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 #if defined(__linux__) && __linux__ || defined(__CYGWIN__) && __CYGWIN__
 #include <pty.h>
-#include <termio.h>
 #include <utmp.h> // login_tty()
 #else
-#include <termios.h> // trial & error on freebsd
 #include <libutil.h>
 #endif
 #include <signal.h>
@@ -241,7 +240,7 @@ int main(void)
             if (shell == null) shell = "/bin/sh";
             char sbuf[12]; // with '8' gcc7 complained about truncation...
             if (len == 1) {
-                char * p = strrchr(shell, '/');
+                const char * p = strrchr(shell, '/');
                 // hax for shell launching wrappers which cannot handle
                 // modified argv[0]: use as e.g. SHELL=/usr/local/bin//zsh
                 if (p && p != shell && p[-1] == '/') {

@@ -29,7 +29,7 @@
  *
  * Created: Tue 05 Feb 2013 21:01:50 EET too (tx11ssh.c)
  * Created: Sun 13 Aug 2017 20:42:46 EEST too
- * Last modified: Sat 02 Apr 2022 00:22:18 +0300 too
+ * Last modified: Tue 07 Jul 2026 18:22:51 +0300 too
  */
 
 /* LICENSE: 2-clause BSD license ("Simplified BSD License"):
@@ -316,7 +316,7 @@ static void wait_peer_protocol_ident(int fd, const char *ident)
 
 static int readfully(int fd, void * buf, ssize_t len)
 {
-    int tl = 0;
+    //int tl = 0;
 
     if (len <= 0) {
 	warn("No data to be read from %d", fd);
@@ -341,7 +341,7 @@ static int readfully(int fd, void * buf, ssize_t len)
 		return false;
 	    }
 	}
-	tl += l;
+	//tl += l;
 	buf = (char *)buf + l;
 	len -= l;
     }
