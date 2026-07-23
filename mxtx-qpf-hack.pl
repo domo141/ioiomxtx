@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # -*- mode: cperl; cperl-indent-level: 8 -*-
 # $ mxtx-qpf-hack.pl $
 #

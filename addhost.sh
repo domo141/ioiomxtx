@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #
 # $ addhost.sh -- add host to hosts-to-proxy for socksproxy to use $
 #
